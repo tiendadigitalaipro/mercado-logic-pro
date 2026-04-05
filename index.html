@@ -1461,7 +1461,19 @@ const THEME = {
 // ===== BASE DE DATOS DE LICENCIAS EMBEBIDAS =====
 // Las licencias generadas por el admin se agregan aquí para que funcionen en CUALQUIER dispositivo.
 // El admin debe agregar nuevas licencias a este array y subir el archivo actualizado.
-const EMBEDDED_LICENSES = [];
+const EMBEDDED_LICENSES = [
+    {
+        id: 1743801600000,
+        type: "DEMO",
+        name: "BODEGA DE TODITO",
+        phone: "",
+        deviceId: "MERCA-2864-D55F-1511",
+        code: "MERCA-CWCJ-JH77-KTXX",
+        createdAt: "2026-04-05T00:00:00.000Z",
+        expiresAt: "2026-04-10T23:59:59.000Z",
+        status: "Activa"
+    }
+];
 
 // ===== FUNCIÓN AUXILIAR PARA EL ADMIN: Generar código de licencia =====
 // Formato: MERCA-XXXX-XXXX-XXXX (16 caracteres alfanuméricos)
@@ -1553,21 +1565,20 @@ const IRON_LOCK = {
         }
         if (!license) return { success: false, message: 'Licencia no encontrada. Verifique el código e intente nuevamente.' };
         if (license.status === 'Revocada') return { success: false, message: 'Esta licencia ha sido revocada por el administrador.' };
-        // Para licencias PRO: asignar al dispositivo actual y activar
-        if (license.type === 'PRO') {
-            license.deviceId = deviceId;
-            // Guardar en localStorage para futuras validaciones
-            const licenses = this.getLicenses();
-            const idx = licenses.findIndex(l => l.code === code);
-            if (idx >= 0) {
-                licenses[idx].deviceId = deviceId;
-            } else {
-                licenses.push({...license, deviceId: deviceId});
-            }
-            this.saveLicenses(licenses);
-        } else if (license.deviceId && license.deviceId !== deviceId) {
+        // Verificar Device ID (excepto si la licencia no tiene deviceId asignado = universal)
+        if (license.deviceId && license.deviceId !== deviceId) {
             return { success: false, message: 'Esta licencia está asignada a otro dispositivo. Device ID esperado: ' + license.deviceId };
         }
+        // Asignar al dispositivo actual y guardar en localStorage (tanto PRO como DEMO)
+        license.deviceId = deviceId;
+        const licenses = this.getLicenses();
+        const idx = licenses.findIndex(l => l.code === code);
+        if (idx >= 0) {
+            licenses[idx] = {...license, deviceId: deviceId};
+        } else {
+            licenses.push({...license, deviceId: deviceId});
+        }
+        this.saveLicenses(licenses);
         localStorage.setItem(this.ACTIVE_KEY, JSON.stringify(license));
         return { success: true, license };
     },
@@ -1578,8 +1589,10 @@ const IRON_LOCK = {
 
     integrityCheck(license, deviceId) {
         if (!license) return true;
+        // Buscar en localStorage Y en la base embebida
         const licenses = this.getLicenses();
-        const found = licenses.find(l => l.code === license.code);
+        let found = licenses.find(l => l.code === license.code);
+        if (!found) found = EMBEDDED_LICENSES.find(l => l.code === license.code);
         if (!found) return false;
         if (found.status === 'Revocada') return false;
         return true;
@@ -1798,6 +1811,20 @@ const LICENSE_UI = {
         screen.style.transform = 'scale(1.05)';
         setTimeout(() => {
             screen.remove();
+            // Mostrar nombre del negocio en el header y sidebar
+            const active = IRON_LOCK.getActiveLicense();
+            const businessName = (active && active.name) ? active.name.toUpperCase() : null;
+            if (businessName) {
+                // Header principal
+                const headerH1 = document.querySelector('header h1');
+                if (headerH1) headerH1.textContent = businessName;
+                // Sidebar
+                const sidebarTitle = document.querySelector('#sidebar p.font-headline');
+                if (sidebarTitle) sidebarTitle.textContent = businessName;
+                // Terminal info con nombre del negocio
+                const terminalInfo = document.querySelector('#sidebar p.text-xs.text-slate-500');
+                if (terminalInfo) terminalInfo.innerHTML = 'Terminal 01 &bull; <span class="text-[9px] opacity-60">MERCADO LOGIC PRO</span>';
+            }
             THEME.init();
             POS.init();
             POS.renderCart();
