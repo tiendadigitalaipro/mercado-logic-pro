@@ -1138,7 +1138,7 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
 <!-- ==================== JAVASCRIPT ==================== -->
 <script>
 // ======================== HELPERS ========================
-const $ = id => document.getElementById(id);
+const $ = (id => document.getElementById(id));
 
 // ======================== THEME SYSTEM ========================
 const THEME = {
@@ -1587,7 +1587,6 @@ const DB = {
 };
 
 // ======================== UTILITY ========================
-function $(id) { return document.getElementById(id); }
 function formatMoney(n) { return '$ ' + (n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 function toast(msg, type='success') {
     const c = $('toastContainer');
