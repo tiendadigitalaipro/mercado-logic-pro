@@ -272,7 +272,11 @@ tailwind.config = {
             <h3 class="font-headline font-bold text-lg uppercase">Detalle de Licencia</h3>
         </div>
         <div id="licenseDetailContent" class="p-6 space-y-3"></div>
-        <div class="p-4 border-t border-outline-variant/20 flex justify-end">
+        <div id="licenseDetailFooter" class="p-4 border-t border-outline-variant/20 flex justify-between items-center">
+            <button onclick="ADMIN.sendLicenseWhatsApp(ADMIN._currentDetailLicense)" class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#25D366] hover:bg-[#1da851] text-white font-bold text-sm transition-all active:scale-95 shadow-md shadow-[#25D366]/20">
+                <span class="material-symbols-outlined text-lg">chat</span>
+                Enviar por WhatsApp
+            </button>
             <button onclick="$('modalLicenseDetail').classList.add('hidden')" class="px-6 py-2 rounded-lg bg-primary text-white font-bold text-sm">Cerrar</button>
         </div>
     </div>
@@ -430,7 +434,6 @@ const ADMIN = {
 
         this.renderTable();
         this.showLicenseDetail(license);
-        alert(`✅ Licencia ${type} generada exitosamente:\n\nCódigo: ${license.code}\nDispositivo: ${deviceId}\nExpira: ${type==='DEMO'?'5 días':'Nunca (PRO)'}`);
     },
 
     renderTable() {
@@ -460,6 +463,9 @@ const ADMIN = {
                         <button onclick="ADMIN.copyLicense('${l.code}')" class="p-1 hover:bg-primary-fixed rounded transition-colors text-primary" title="Copiar Código">
                             <span class="material-symbols-outlined text-lg">content_copy</span>
                         </button>
+                        <button onclick="ADMIN.sendLicenseWhatsApp(ADMIN.findLicense(${l.id}))" class="p-1 hover:bg-[#25D366]/10 rounded transition-colors text-[#25D366]" title="Enviar por WhatsApp">
+                            <span class="material-symbols-outlined text-lg">chat</span>
+                        </button>
                     </td>
                 </tr>`;
             }).join('');
@@ -477,6 +483,7 @@ const ADMIN = {
 
     showLicenseDetail(license) {
         if (!license) return;
+        this._currentDetailLicense = license;
         const expired = IRON_LOCK.isExpired(license);
         const headerClass = license.type === 'PRO' ? 'bg-primary' : 'bg-surface-container-high';
         $('licenseDetailHeader').className = `${headerClass} p-4 text-white`;
@@ -515,6 +522,38 @@ const ADMIN = {
         }).catch(() => {
             prompt('Copie el código:', code);
         });
+    },
+
+    sendLicenseWhatsApp(license) {
+        if (!license) { alert('No hay licencia seleccionada'); return; }
+        const created = new Date(license.createdAt);
+        const expires = new Date(license.expiresAt);
+        const expiraTexto = license.type === 'PRO' ? 'Vitalicia' : expires.toLocaleDateString('es-MX', {day:'numeric',month:'long',year:'numeric'});
+        const dias = license.type === 'DEMO' ? Math.ceil((expires - new Date()) / (1000*60*60*24)) + ' días' : 'Sin límite';
+        
+        const msg = `🧾 *MERCADO LOGIC PRO - Licencia ${license.type}*\n\n` +
+            `Negocio: *${license.name}*\n` +
+            `Código: *${license.code}*\n` +
+            `Device ID: ${license.deviceId}\n` +
+            `Vigencia: ${expiraTexto} (${dias})\n` +
+            `Fecha: ${created.toLocaleDateString('es-MX')}\n\n` +
+            `📋 *Instrucciones de activación:*\n` +
+            `1. Abra la app MERCADO LOGIC PRO\n` +
+            `2. En la pantalla de licencia, copie su Device ID\n` +
+            `3. Ingrese este código: *${license.code}*\n` +
+            `4. Presione ACTIVAR LICENCIA\n` +
+            `5. ¡Listo! ${license.type === 'DEMO' ? 'Disfrute su prueba de 5 días.' : 'Acceso vitalicio activado.'}\n\n` +
+            `_A2K Digital Studio_ © 2026`;
+        
+        let phone = license.phone || '';
+        phone = phone.replace(/[^0-9+]/g, '');
+        if (!phone || phone.length < 8) {
+            phone = prompt('Ingrese el número de WhatsApp del cliente (con código de país):\nEjemplo: +584121234567', '');
+            if (!phone) return;
+        }
+        if (!phone.startsWith('+')) phone = '+' + phone.replace(/^0+/, '');
+        
+        window.open('https://wa.me/' + phone.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(msg), '_blank');
     },
 
     clearHistory() {
