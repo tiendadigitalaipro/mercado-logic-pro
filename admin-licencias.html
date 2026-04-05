@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MERCADO LOGIC PRO - Administrador de Licencias</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+tailwind.config = {
+    darkMode: "class",
+    theme: {
+        extend: {
+            colors: {
+                "primary": "#0040a1",
+                "surface-container-lowest": "#ffffff",
+                "outline-variant": "#c3c6d6",
+                "on-primary": "#ffffff",
+                "surface-container-high": "#e8e8ed",
+                "tertiary": "#940010",
+                "on-surface": "#1a1c1f",
+                "on-secondary": "#ffffff",
+                "surface-container-low": "#f3f3f8",
+                "secondary": "#1b6d24",
+                "on-surface-variant": "#424654",
+                "surface-container-highest": "#e2e2e7",
+                "on-primary-fixed-variant": "#0040a1",
+                "primary-container": "#0056d2",
+                "tertiary-container": "#ba1b20",
+                "on-primary-container": "#ccd8ff",
+                "primary-fixed": "#dae2ff",
+                "surface": "#f9f9fe",
+                "secondary-container": "#a0f399",
+                "surface-container": "#ededf2",
+                "outline": "#737785",
+                "background": "#f9f9fe",
+                "on-error-container": "#93000a",
+                "error-container": "#ffdad6",
+                "tertiary-fixed": "#ffdad6",
+                "on-secondary-container": "#217128",
+                "on-tertiary-container": "#ffcdc8",
+                "secondary-fixed": "#a3f69c",
+                "on-primary-fixed": "#001847"
+            },
+            borderRadius: { DEFAULT: "0.125rem", lg: "0.25rem", xl: "0.5rem", full: "0.75rem" },
+            fontFamily: { headline: ["Public Sans"], body: ["Inter"], label: ["Inter"] }
+        }
+    }
+}
+</script>
+<style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    .glass-panel { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); }
+    input:focus, select:focus { outline: none; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body class="bg-background text-on-surface font-body min-h-screen flex flex-col">
+
+<!-- ==================== LOGIN SCREEN ==================== -->
+<div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary-container to-surface p-4">
+    <div class="w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center text-primary font-black italic text-4xl font-headline mx-auto mb-4 shadow-xl">M</div>
+            <h1 class="text-3xl font-black text-white font-headline uppercase tracking-tight">MERCADO LOGIC PRO</h1>
+            <p class="text-white/70 text-sm mt-2">Administrador de Licencias IRON LOCK v2</p>
+        </div>
+        <div class="bg-surface-container-lowest rounded-2xl shadow-2xl p-8">
+            <div class="flex items-center gap-3 mb-6">
+                <span class="material-symbols-outlined text-primary text-2xl">shield</span>
+                <h2 class="font-headline font-bold text-lg uppercase">Acceso Administrador</h2>
+            </div>
+            <div class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-outline uppercase tracking-widest">Contraseña Admin</label>
+                    <input id="adminPassword" type="password" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg font-bold text-center text-xl tracking-[0.3em]" placeholder="••••••••" onkeydown="if(event.key==='Enter')ADMIN.login()"/>
+                </div>
+                <button onclick="ADMIN.login()" class="w-full bg-primary hover:bg-primary-container text-white py-4 rounded-xl font-black text-lg shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">login</span>
+                    INGRESAR
+                </button>
+            </div>
+            <p id="loginError" class="text-tertiary text-xs font-bold mt-4 text-center hidden">Contraseña incorrecta</p>
+            <div class="mt-6 pt-4 border-t border-outline-variant/20 text-center">
+                <p class="text-[10px] text-outline">A2K Digital Studio &bull; IRON LOCK v2 License System</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== ADMIN PANEL ==================== -->
+<div id="adminPanel" class="hidden min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-black italic">M</div>
+            <div>
+                <h1 class="text-lg font-black font-headline uppercase tracking-tight">MERCADO LOGIC PRO &bull; ADMIN LICENCIAS</h1>
+                <p class="text-[10px] text-white/60 uppercase tracking-widest">IRON LOCK v2 &bull; Panel de Administración</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-right">
+                <p class="text-sm font-bold">Administrador</p>
+                <p class="text-[10px] text-white/60">Panel Activo</p>
+            </div>
+            <button onclick="ADMIN.logout()" class="bg-tertiary hover:bg-tertiary-container text-white px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">logout</span>
+                Salir
+            </button>
+        </div>
+    </header>
+
+    <!-- Content -->
+    <main class="flex-1 overflow-y-auto p-8 space-y-8 max-w-6xl mx-auto w-full">
+        <!-- Device Info -->
+        <div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant/20">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="material-symbols-outlined text-primary">fingerprint</span>
+                <h3 class="font-headline font-bold text-lg uppercase">Dispositivo Actual</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-surface-container-lowest p-4 rounded-lg">
+                    <p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Device ID</p>
+                    <p id="deviceId" class="font-mono text-sm font-bold text-primary tabular-nums break-all"></p>
+                </div>
+                <div class="bg-surface-container-lowest p-4 rounded-lg">
+                    <p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Navegador</p>
+                    <p id="browserInfo" class="text-sm font-bold text-on-surface"></p>
+                </div>
+                <div class="bg-surface-container-lowest p-4 rounded-lg">
+                    <p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-1">Licencia Actual</p>
+                    <p id="currentLicense" class="text-sm font-bold text-on-surface">Sin licencia activa</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generate Licenses -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- DEMO License -->
+            <div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/20 shadow-sm">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined">schedule</span>
+                    </div>
+                    <div>
+                        <h3 class="font-headline font-bold text-lg uppercase">Licencia DEMO</h3>
+                        <p class="text-[10px] text-outline">5 días de prueba gratuita</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-outline uppercase tracking-widest">Nombre del Negocio</label>
+                        <input id="demoName" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg font-medium" type="text" placeholder="Nombre de la bodega"/>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-outline uppercase tracking-widest">Teléfono</label>
+                        <input id="demoPhone" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg font-medium tabular-nums" type="text" placeholder="+52 55 1234 5678"/>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-outline uppercase tracking-widest">Device ID (destino)</label>
+                        <input id="demoDeviceId" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg font-mono text-xs" type="text" placeholder="MERCA-XXXX-XXXX-XXXX"/>
+                    </div>
+                    <button onclick="ADMIN.generateLicense('DEMO')" class="w-full bg-primary hover:bg-primary-container text-white py-3 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-sm">play_circle</span>
+                        GENERAR LICENCIA DEMO
+                    </button>
+                </div>
+            </div>
+
+            <!-- PRO License -->
+            <div class="bg-primary p-6 rounded-xl shadow-sm relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-secondary text-white text-[10px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-wider">Pro</div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-white">
+                            <span class="material-symbols-outlined">workspace_premium</span>
+                        </div>
+                        <div>
+                            <h3 class="font-headline font-bold text-lg uppercase text-white">Licencia PRO</h3>
+                            <p class="text-[10px] text-white/60">Acceso vitalicio completo</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-white/60 uppercase tracking-widest">Nombre del Negocio</label>
+                            <input id="proName" class="w-full bg-white/10 border-none focus:ring-2 focus:ring-secondary p-3 rounded-lg font-medium text-white placeholder-white/30" type="text" placeholder="Nombre de la bodega"/>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-white/60 uppercase tracking-widest">Teléfono</label>
+                            <input id="proPhone" class="w-full bg-white/10 border-none focus:ring-2 focus:ring-secondary p-3 rounded-lg font-medium text-white tabular-nums placeholder-white/30" type="text" placeholder="+52 55 1234 5678"/>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-white/60 uppercase tracking-widest">Device ID (destino)</label>
+                            <input id="proDeviceId" class="w-full bg-white/10 border-none focus:ring-2 focus:ring-secondary p-3 rounded-lg font-mono text-xs text-white placeholder-white/30" type="text" placeholder="MERCA-XXXX-XXXX-XXXX"/>
+                        </div>
+                        <button onclick="ADMIN.generateLicense('PRO')" class="w-full bg-secondary hover:brightness-110 text-white py-3 rounded-xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-secondary/20">
+                            <span class="material-symbols-outlined text-sm">verified</span>
+                            GENERAR LICENCIA PRO
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- License History -->
+        <div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+            <div class="flex items-center justify-between p-6 pb-4">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary">history</span>
+                    <h3 class="font-headline font-bold text-lg uppercase">Historial de Licencias</h3>
+                </div>
+                <button onclick="ADMIN.clearHistory()" class="text-xs font-bold text-tertiary hover:underline">Limpiar historial</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-surface-container-high border-b border-outline-variant/20">
+                            <th class="px-6 py-3 text-[11px] font-black text-on-surface uppercase tracking-wider">Tipo</th>
+                            <th class="px-6 py-3 text-[11px] font-black text-on-surface uppercase tracking-wider">Negocio</th>
+                            <th class="px-6 py-3 text-[11px] font-black text-on-surface uppercase tracking-wider">Código Licencia</th>
+                            <th class="px-6 py-3 text-[11px] font-black text-on-surface uppercase tracking-wider">Fecha Activación</th>
+                            <th class="px-6 py-3 text-[11px] font-black text-on-surface uppercase tracking-wider">Expiración</th>
+                            <th class="px-6 py-3 text-[11px] font-black text-on-surface uppercase tracking-wider">Estado</th>
+                            <th class="px-6 py-3 text-[11px] font-black text-on-surface uppercase tracking-wider text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="licenseTable" class="divide-y divide-outline-variant/10"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pb-8">
+            <div class="bg-surface-container-high/50 p-4 rounded-xl flex items-center gap-4 border border-outline-variant/10">
+                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">license</span>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-outline uppercase tracking-widest leading-none mb-1">Total Licencias</p>
+                    <p id="statTotal" class="text-xl font-black text-on-surface font-headline">0</p>
+                </div>
+            </div>
+            <div class="bg-surface-container-high/50 p-4 rounded-xl flex items-center gap-4 border border-outline-variant/10">
+                <div class="w-12 h-12 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+                    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">verified_user</span>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-outline uppercase tracking-widest leading-none mb-1">Activas</p>
+                    <p id="statActive" class="text-xl font-black text-secondary font-headline">0</p>
+                </div>
+            </div>
+            <div class="bg-surface-container-high/50 p-4 rounded-xl flex items-center gap-4 border border-outline-variant/10">
+                <div class="w-12 h-12 rounded-lg bg-tertiary-container/10 flex items-center justify-center text-tertiary">
+                    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">event_busy</span>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-outline uppercase tracking-widest leading-none mb-1">Expiradas</p>
+                    <p id="statExpired" class="text-xl font-black text-tertiary font-headline">0</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ==================== LICENSE DETAIL MODAL ==================== -->
+<div id="modalLicenseDetail" class="hidden fixed inset-0 bg-black/50 z-[80] items-center justify-center" onclick="if(event.target===this)this.classList.add('hidden')">
+    <div class="bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+        <div id="licenseDetailHeader" class="bg-primary p-4 text-white">
+            <h3 class="font-headline font-bold text-lg uppercase">Detalle de Licencia</h3>
+        </div>
+        <div id="licenseDetailContent" class="p-6 space-y-3"></div>
+        <div class="p-4 border-t border-outline-variant/20 flex justify-end">
+            <button onclick="$('modalLicenseDetail').classList.add('hidden')" class="px-6 py-2 rounded-lg bg-primary text-white font-bold text-sm">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ======================== IRON LOCK v2 ========================
+const IRON_LOCK = {
+    ADMIN_PASS: 'a2k2024',
+    generateDeviceId() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 200; canvas.height = 50;
+        ctx.textBaseline = 'top'; ctx.font = '14px Arial';
+        ctx.fillStyle = '#f60'; ctx.fillRect(0, 0, 200, 50);
+        ctx.fillStyle = '#069'; ctx.fillText('MercadoLogic-fingerprint', 2, 15);
+        ctx.fillStyle = 'rgba(102,204,0,0.7)'; ctx.fillText('IRON_LOCK_v2', 4, 30);
+        const data = canvas.toDataURL();
+        let hash = 0;
+        const nav = navigator.userAgent + navigator.language + screen.width + screen.height + data;
+        for (let i = 0; i < nav.length; i++) {
+            const c = nav.charCodeAt(i);
+            hash = ((hash << 5) - hash) + c;
+            hash |= 0;
+        }
+        const hex = Math.abs(hash).toString(16).toUpperCase().padStart(8, '0').substring(0, 8);
+        return `MERCA-${hex.substring(0,4)}-${hex.substring(4,8)}-${(Math.abs(hash) % 9000 + 1000)}`;
+    },
+
+    generateLicenseCode(type) {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = 'MERCA-';
+        for (let g = 0; g < 3; g++) {
+            if (g > 0) code += '-';
+            for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+        }
+        return code;
+    },
+
+    getLicenses() {
+        const raw = localStorage.getItem('mercado_licenses');
+        return raw ? JSON.parse(raw) : [];
+    },
+
+    saveLicenses(licenses) {
+        localStorage.setItem('mercado_licenses', JSON.stringify(licenses));
+    },
+
+    isExpired(license) {
+        if (license.type === 'PRO') return false;
+        return new Date(license.expiresAt) < new Date();
+    }
+};
+
+// ======================== ADMIN MODULE ========================
+const ADMIN = {
+    deviceId: '',
+
+    init() {
+        this.deviceId = IRON_LOCK.generateDeviceId();
+        $('deviceId').textContent = this.deviceId;
+        $('demoDeviceId').placeholder = this.deviceId;
+        $('proDeviceId').placeholder = this.deviceId;
+
+        // Browser info
+        const ua = navigator.userAgent;
+        let browser = 'Desconocido';
+        if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Google Chrome';
+        else if (ua.includes('Firefox')) browser = 'Mozilla Firefox';
+        else if (ua.includes('Edg')) browser = 'Microsoft Edge';
+        else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+        $('browserInfo').textContent = browser;
+
+        // Check current license
+        const licenses = IRON_LOCK.getLicenses();
+        const activeLicense = licenses.find(l => l.deviceId === this.deviceId && !IRON_LOCK.isExpired(l));
+        if (activeLicense) {
+            $('currentLicense').innerHTML = `<span class="text-secondary font-bold">${activeLicense.type}</span> &bull; ${activeLicense.code}`;
+        } else {
+            $('currentLicense').innerHTML = '<span class="text-tertiary">Sin licencia activa</span>';
+        }
+
+        // Auto-fill device IDs
+        $('demoDeviceId').value = this.deviceId;
+        $('proDeviceId').value = this.deviceId;
+
+        this.renderTable();
+    },
+
+    login() {
+        const pass = $('adminPassword').value;
+        if (pass === IRON_LOCK.ADMIN_PASS) {
+            $('loginScreen').classList.add('hidden');
+            $('adminPanel').classList.remove('hidden');
+            $('loginError').classList.add('hidden');
+            this.init();
+        } else {
+            $('loginError').classList.remove('hidden');
+            $('adminPassword').value = '';
+            $('adminPassword').focus();
+        }
+    },
+
+    logout() {
+        $('adminPanel').classList.add('hidden');
+        $('loginScreen').classList.remove('hidden');
+        $('adminPassword').value = '';
+    },
+
+    generateLicense(type) {
+        let name, phone, deviceId;
+        if (type === 'DEMO') {
+            name = $('demoName').value.trim();
+            phone = $('demoPhone').value.trim();
+            deviceId = $('demoDeviceId').value.trim();
+            if (!name || !phone) { alert('Nombre y teléfono son obligatorios'); return; }
+        } else {
+            name = $('proName').value.trim();
+            phone = $('proPhone').value.trim();
+            deviceId = $('proDeviceId').value.trim();
+            if (!name || !phone) { alert('Nombre y teléfono son obligatorios'); return; }
+        }
+        if (!deviceId) deviceId = this.deviceId;
+
+        const licenses = IRON_LOCK.getLicenses();
+        const now = new Date();
+        let expiresAt;
+        if (type === 'DEMO') {
+            const exp = new Date(now);
+            exp.setDate(exp.getDate() + 5);
+            expiresAt = exp.toISOString();
+        } else {
+            expiresAt = '9999-12-31T23:59:59.000Z';
+        }
+
+        const license = {
+            id: Date.now(),
+            type,
+            name,
+            phone,
+            deviceId,
+            code: IRON_LOCK.generateLicenseCode(type),
+            createdAt: now.toISOString(),
+            expiresAt,
+            status: 'Activa'
+        };
+        licenses.push(license);
+        IRON_LOCK.saveLicenses(licenses);
+
+        // Clear form
+        if (type === 'DEMO') { $('demoName').value=''; $('demoPhone').value=''; }
+        else { $('proName').value=''; $('proPhone').value=''; }
+
+        this.renderTable();
+        this.showLicenseDetail(license);
+        alert(`✅ Licencia ${type} generada exitosamente:\n\nCódigo: ${license.code}\nDispositivo: ${deviceId}\nExpira: ${type==='DEMO'?'5 días':'Nunca (PRO)'}`);
+    },
+
+    renderTable() {
+        const licenses = IRON_LOCK.getLicenses();
+        $('licenseTable').innerHTML = licenses.length === 0
+            ? '<tr><td colspan="7" class="px-6 py-8 text-center text-outline">No hay licencias generadas</td></tr>'
+            : [...licenses].reverse().map(l => {
+                const expired = IRON_LOCK.isExpired(l);
+                const typeClass = l.type === 'PRO' ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface';
+                const statusClass = expired ? 'bg-tertiary-fixed text-on-error-container' : 'bg-secondary-container text-on-secondary-container';
+                const created = new Date(l.createdAt);
+                const expires = new Date(l.expiresAt);
+                return `<tr class="hover:bg-surface-container-highest transition-colors">
+                    <td class="px-6 py-3"><span class="px-2 py-1 ${typeClass} rounded text-[10px] font-black uppercase">${l.type}</span></td>
+                    <td class="px-6 py-3 font-bold text-sm">${l.name}</td>
+                    <td class="px-6 py-3 font-mono text-xs text-primary font-bold">${l.code}</td>
+                    <td class="px-6 py-3 text-xs tabular-nums text-on-surface-variant">${created.toLocaleDateString('es-MX')}</td>
+                    <td class="px-6 py-3 text-xs tabular-nums text-on-surface-variant">${l.type==='PRO'?'Vitalicia':expires.toLocaleDateString('es-MX')}</td>
+                    <td class="px-6 py-3"><span class="px-2 py-0.5 ${statusClass} rounded text-[10px] font-bold uppercase">${expired?'Expirada':'Activa'}</span></td>
+                    <td class="px-6 py-3 text-center">
+                        <button onclick="ADMIN.showLicenseDetail(ADMIN.findLicense(${l.id}))" class="p-1 hover:bg-surface-variant rounded transition-colors text-outline" title="Ver Detalle">
+                            <span class="material-symbols-outlined text-lg">visibility</span>
+                        </button>
+                        <button onclick="ADMIN.revokeLicense(${l.id})" class="p-1 hover:bg-tertiary-fixed rounded transition-colors text-tertiary" title="Revocar">
+                            <span class="material-symbols-outlined text-lg">block</span>
+                        </button>
+                        <button onclick="ADMIN.copyLicense('${l.code}')" class="p-1 hover:bg-primary-fixed rounded transition-colors text-primary" title="Copiar Código">
+                            <span class="material-symbols-outlined text-lg">content_copy</span>
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+
+        // Stats
+        const total = licenses.length;
+        const active = licenses.filter(l => !IRON_LOCK.isExpired(l)).length;
+        const expired = licenses.filter(l => IRON_LOCK.isExpired(l)).length;
+        $('statTotal').textContent = total;
+        $('statActive').textContent = active;
+        $('statExpired').textContent = expired;
+    },
+
+    findLicense(id) { return IRON_LOCK.getLicenses().find(l => l.id === id); },
+
+    showLicenseDetail(license) {
+        if (!license) return;
+        const expired = IRON_LOCK.isExpired(license);
+        const headerClass = license.type === 'PRO' ? 'bg-primary' : 'bg-surface-container-high';
+        $('licenseDetailHeader').className = `${headerClass} p-4 text-white`;
+        $('licenseDetailHeader').innerHTML = `<div class="flex items-center gap-3"><span class="material-symbols-outlined text-2xl">${license.type==='PRO'?'workspace_premium':'schedule'}</span><div><h3 class="font-headline font-bold text-lg">Licencia ${license.type}</h3><p class="text-xs opacity-80">${license.code}</p></div></div>`;
+
+        const created = new Date(license.createdAt);
+        const expires = new Date(license.expiresAt);
+        $('licenseDetailContent').innerHTML = `
+            <div class="space-y-3">
+                <div class="flex justify-between"><span class="text-sm text-on-surface-variant">Negocio</span><span class="font-bold">${license.name}</span></div>
+                <div class="flex justify-between"><span class="text-sm text-on-surface-variant">Teléfono</span><span class="font-bold tabular-nums">${license.phone}</span></div>
+                <div class="flex justify-between"><span class="text-sm text-on-surface-variant">Device ID</span><span class="font-mono text-xs font-bold text-primary">${license.deviceId}</span></div>
+                <div class="flex justify-between"><span class="text-sm text-on-surface-variant">Fecha Creación</span><span class="font-bold tabular-nums">${created.toLocaleDateString('es-MX')}</span></div>
+                <div class="flex justify-between"><span class="text-sm text-on-surface-variant">Expiración</span><span class="font-bold tabular-nums">${license.type==='PRO'?'Vitalicia':expires.toLocaleDateString('es-MX')}</span></div>
+                <div class="flex justify-between"><span class="text-sm text-on-surface-variant">Estado</span><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${expired?'bg-tertiary-fixed text-on-error-container':'bg-secondary-container text-on-secondary-container'}">${expired?'Expirada':'Activa'}</span></div>
+                <div class="pt-3 border-t border-outline-variant/20">
+                    <p class="text-[10px] font-bold text-outline uppercase tracking-widest mb-2">Código de Licencia</p>
+                    <div class="bg-surface-container-low p-3 rounded-lg font-mono text-lg font-bold text-primary text-center tracking-wider select-all">${license.code}</div>
+                </div>
+            </div>
+        `;
+        $('modalLicenseDetail').classList.remove('hidden');
+    },
+
+    revokeLicense(id) {
+        if (!confirm('¿Revocar esta licencia?')) return;
+        let licenses = IRON_LOCK.getLicenses();
+        licenses = licenses.filter(l => l.id !== id);
+        IRON_LOCK.saveLicenses(licenses);
+        this.renderTable();
+    },
+
+    copyLicense(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            alert('📋 Código copiado: ' + code);
+        }).catch(() => {
+            prompt('Copie el código:', code);
+        });
+    },
+
+    clearHistory() {
+        if (!confirm('¿Limpiar todo el historial de licencias?')) return;
+        IRON_LOCK.saveLicenses([]);
+        this.renderTable();
+    }
+};
+
+// Enter on login
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !$('loginScreen').classList.contains('hidden')) {
+        ADMIN.login();
+    }
+});
+</script>
+</body>
+</html>
