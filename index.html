@@ -1486,6 +1486,10 @@ const IRON_LOCK = {
         catch(e) { return []; }
     },
 
+    saveLicenses(licenses) {
+        try { localStorage.setItem(this.STORAGE_KEY, JSON.stringify(licenses)); } catch(e) {}
+    },
+
     getActiveLicense() {
         try { return JSON.parse(localStorage.getItem(this.ACTIVE_KEY) || 'null'); }
         catch(e) { return null; }
@@ -1514,10 +1518,22 @@ const IRON_LOCK = {
     },
 
     activateLicense(code, deviceId) {
-        const license = this.findMatchingLicense(code, deviceId);
+        let license = this.findMatchingLicense(code, deviceId);
+        if (!license) {
+            // Si no encuentra por deviceId, buscar solo por código (para licencias PRO generadas en admin)
+            const allLicenses = this.getLicenses();
+            license = allLicenses.find(l => l.code === code) || null;
+        }
         if (!license) return { success: false, message: 'Licencia no encontrada. Verifique el código e intente nuevamente.' };
         if (license.status === 'Revocada') return { success: false, message: 'Esta licencia ha sido revocada por el administrador.' };
-        if (license.deviceId && license.deviceId !== deviceId) {
+        // Para licencias PRO: actualizar deviceId al dispositivo actual y activar
+        if (license.type === 'PRO') {
+            license.deviceId = deviceId;
+            // Actualizar en la lista de licencias
+            const licenses = this.getLicenses();
+            const idx = licenses.findIndex(l => l.code === code);
+            if (idx >= 0) { licenses[idx].deviceId = deviceId; this.saveLicenses(licenses); }
+        } else if (license.deviceId && license.deviceId !== deviceId) {
             return { success: false, message: 'Esta licencia está asignada a otro dispositivo. Device ID esperado: ' + license.deviceId };
         }
         localStorage.setItem(this.ACTIVE_KEY, JSON.stringify(license));
