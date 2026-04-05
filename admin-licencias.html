@@ -261,6 +261,27 @@ tailwind.config = {
                     <p id="statExpired" class="text-xl font-black text-tertiary font-headline">0</p>
                 </div>
             </div>
+
+            <!-- ===== SECCIÓN EXPORTAR LICENCIAS EMBEBIDAS ===== -->
+            <div class="bg-surface-container-high/50 p-4 rounded-xl border border-primary/20 mt-4">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined">code</span>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-outline uppercase tracking-widest leading-none mb-1">Exportar Licencias</p>
+                            <p class="text-xs text-on-surface-variant">Embeber en index.html para clientes</p>
+                        </div>
+                    </div>
+                    <button onclick="ADMIN.updateExportCode(); ADMIN.copyExportCode()" class="bg-primary hover:bg-primary-container text-white px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 active:scale-95">
+                        <span class="material-symbols-outlined text-sm">content_copy</span>
+                        Copiar Código
+                    </button>
+                </div>
+                <textarea id="exportCodeArea" class="w-full h-24 bg-surface-container-lowest border border-outline-variant/20 rounded-lg p-3 text-xs font-mono text-on-surface resize-none" readonly placeholder="Las licencias activas aparecerán aquí..."></textarea>
+                <p class="text-[10px] text-outline mt-2">📋 Copia este código y reemplaza la línea <code class="bg-surface-container-low px-1 rounded">const EMBEDDED_LICENSES = [];</code> en index.html</p>
+            </div>
         </div>
     </main>
 </div>
@@ -434,6 +455,36 @@ const ADMIN = {
 
         this.renderTable();
         this.showLicenseDetail(license);
+        this.updateExportCode();
+    },
+
+    // ===== EXPORTAR LICENCIAS PARA EMBEBER EN index.html =====
+    updateExportCode() {
+        const licenses = IRON_LOCK.getLicenses().filter(l => l.status === 'Activa' && !IRON_LOCK.isExpired(l));
+        if (licenses.length === 0) {
+            $('exportCodeArea').value = '// No hay licencias activas para exportar';
+            return;
+        }
+        const code = licenses.map(l => ({
+            id: l.id,
+            type: l.type,
+            name: l.name,
+            phone: l.phone,
+            deviceId: l.deviceId || null,
+            code: l.code,
+            createdAt: l.createdAt,
+            expiresAt: l.expiresAt,
+            status: 'Activa'
+        }));
+        $('exportCodeArea').value = 'const EMBEDDED_LICENSES = ' + JSON.stringify(code, null, 4) + ';';
+    },
+
+    copyExportCode() {
+        const area = $('exportCodeArea');
+        area.select();
+        navigator.clipboard.writeText(area.value).then(() => {
+            toast('✅ Código copiado al portapapeles', 'success');
+        });
     },
 
     renderTable() {
@@ -477,6 +528,7 @@ const ADMIN = {
         $('statTotal').textContent = total;
         $('statActive').textContent = active;
         $('statExpired').textContent = expired;
+        this.updateExportCode();
     },
 
     findLicense(id) { return IRON_LOCK.getLicenses().find(l => l.id === id); },

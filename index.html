@@ -1457,6 +1457,22 @@ const THEME = {
 };
 
 // ======================== IRON LOCK v2 - LICENSE SYSTEM ========================
+
+// ===== BASE DE DATOS DE LICENCIAS EMBEBIDAS =====
+// Las licencias generadas por el admin se agregan aquí para que funcionen en CUALQUIER dispositivo.
+// El admin debe agregar nuevas licencias a este array y subir el archivo actualizado.
+const EMBEDDED_LICENSES = [];
+
+// ===== FUNCIÓN AUXILIAR PARA EL ADMIN: Generar código de licencia =====
+// Formato: MERCA-XXXX-XXXX-XXXX (16 caracteres alfanuméricos)
+function generateLicenseCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const segments = [4, 4, 4];
+    return 'MERCA-' + segments.map(len =>
+        Array.from({length: len}, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+    ).join('-');
+}
+
 const IRON_LOCK = {
     STORAGE_KEY: 'mercado_licenses',
     ACTIVE_KEY: 'mercado_active_license',
@@ -1518,21 +1534,37 @@ const IRON_LOCK = {
     },
 
     activateLicense(code, deviceId) {
+        // 1) Buscar primero en localStorage (licencias del admin local)
         let license = this.findMatchingLicense(code, deviceId);
         if (!license) {
-            // Si no encuentra por deviceId, buscar solo por código (para licencias PRO generadas en admin)
             const allLicenses = this.getLicenses();
             license = allLicenses.find(l => l.code === code) || null;
         }
+        // 2) Si no está en localStorage, buscar en la base embebida (para clientes en otros dispositivos)
+        if (!license) {
+            license = EMBEDDED_LICENSES.find(l => l.code === code) || null;
+        }
+        // 3) Si la licencia es "universal" (no tiene deviceId asignado), se acepta desde cualquier dispositivo
+        if (!license) {
+            // Último intento: buscar cualquier licencia que coincida parcialmente (por si el formato varía)
+            const cleanCode = code.replace(/[^A-Z0-9-]/gi, '').toUpperCase();
+            const allSources = [...this.getLicenses(), ...EMBEDDED_LICENSES];
+            license = allSources.find(l => l.code && l.code.replace(/[^A-Z0-9-]/gi, '').toUpperCase() === cleanCode) || null;
+        }
         if (!license) return { success: false, message: 'Licencia no encontrada. Verifique el código e intente nuevamente.' };
         if (license.status === 'Revocada') return { success: false, message: 'Esta licencia ha sido revocada por el administrador.' };
-        // Para licencias PRO: actualizar deviceId al dispositivo actual y activar
+        // Para licencias PRO: asignar al dispositivo actual y activar
         if (license.type === 'PRO') {
             license.deviceId = deviceId;
-            // Actualizar en la lista de licencias
+            // Guardar en localStorage para futuras validaciones
             const licenses = this.getLicenses();
             const idx = licenses.findIndex(l => l.code === code);
-            if (idx >= 0) { licenses[idx].deviceId = deviceId; this.saveLicenses(licenses); }
+            if (idx >= 0) {
+                licenses[idx].deviceId = deviceId;
+            } else {
+                licenses.push({...license, deviceId: deviceId});
+            }
+            this.saveLicenses(licenses);
         } else if (license.deviceId && license.deviceId !== deviceId) {
             return { success: false, message: 'Esta licencia está asignada a otro dispositivo. Device ID esperado: ' + license.deviceId };
         }
