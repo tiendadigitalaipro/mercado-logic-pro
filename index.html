@@ -2393,12 +2393,60 @@ const POS = {
         const expr = $('calcInput').value.trim();
         if (!expr) return;
         try {
-            const result = Function('"use strict"; return (' + expr.replace(/[^0-9+\-*/.()% ]/g, '') + ')')();
-            $('calcResult').textContent = '= ' + (typeof result === 'number' ? result.toFixed(2) : result);
-            $('calcHistory').innerHTML = '<div class="text-xs text-on-surface-variant">' + expr + ' = <span class="font-bold text-primary">' + (typeof result === 'number' ? result.toFixed(2) : result) + '</span></div>' + ($('calcHistory').innerHTML || '');
+            const result = this.safeEval(expr);
+            if (result === null || isNaN(result)) {
+                $('calcResult').textContent = 'Error';
+                return;
+            }
+            const formatted = result.toFixed(2);
+            $('calcResult').textContent = '= ' + formatted;
+            $('calcHistory').innerHTML = '<div class="text-xs text-on-surface-variant">' + expr + ' = <span class="font-bold text-primary">' + formatted + '</span></div>' + ($('calcHistory').innerHTML || '');
         } catch (err) {
             $('calcResult').textContent = 'Error';
         }
+    },
+
+    safeEval(expr) {
+        let s = expr.replace(/[^0-9+\-*/.()% ]/g, '');
+        s = s.replace(/%/g, '/100');
+        s = s.replace(/\s+/g, '');
+        if (!s) return null;
+        let pos = 0;
+        function parseExpr() {
+            let left = parseTerm();
+            while (pos < s.length && (s[pos] === '+' || s[pos] === '-')) {
+                const op = s[pos++];
+                const right = parseTerm();
+                left = op === '+' ? left + right : left - right;
+            }
+            return left;
+        }
+        function parseTerm() {
+            let left = parseFactor();
+            while (pos < s.length && (s[pos] === '*' || s[pos] === '/')) {
+                const op = s[pos++];
+                const right = parseFactor();
+                left = op === '*' ? left * right : left / right;
+            }
+            return left;
+        }
+        function parseFactor() {
+            if (s[pos] === '-') { pos++; return -parseFactor(); }
+            if (s[pos] === '(') {
+                pos++;
+                const val = parseExpr();
+                if (s[pos] === ')') pos++;
+                return val;
+            }
+            let num = '';
+            while (pos < s.length && ((s[pos] >= '0' && s[pos] <= '9') || s[pos] === '.')) {
+                num += s[pos++];
+            }
+            return parseFloat(num) || 0;
+        }
+        try {
+            return parseExpr();
+        } catch(e) { return null; }
     },
 
     calcSendToTotal() {
