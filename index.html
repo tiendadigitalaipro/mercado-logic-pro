@@ -175,7 +175,7 @@ tailwind.config = {
                     <span class="material-symbols-outlined text-slate-600">notifications</span>
                     <span id="notifBadge" class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-tertiary text-white text-[9px] font-bold rounded-full flex items-center justify-center hidden">0</span>
                 </button>
-                <button class="p-2 hover:bg-slate-200/50 transition-colors rounded-lg">
+                <button class="p-2 hover:bg-slate-200/50 transition-colors rounded-lg" onclick="POS.toggleCalcPanel()">
                     <span class="material-symbols-outlined text-slate-600">account_balance_wallet</span>
                 </button>
             </div>
@@ -247,11 +247,16 @@ tailwind.config = {
                             <span>COBRAR</span>
                             <span class="text-[10px] font-bold opacity-80">(F12)</span>
                         </button>
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-3 gap-3">
                             <button onclick="POS.openDiscountModal()" class="bg-primary/10 hover:bg-primary/20 text-primary py-4 rounded-xl font-bold transition-all flex flex-col items-center leading-tight">
                                 <span class="material-symbols-outlined mb-1">percent</span>
                                 <span class="text-xs">DESCUENTO</span>
                                 <span class="text-[10px] opacity-70">(F9)</span>
+                            </button>
+                            <button onclick="POS.holdSale()" class="bg-primary/10 hover:bg-primary/20 text-primary py-4 rounded-xl font-bold transition-all flex flex-col items-center leading-tight">
+                                <span class="material-symbols-outlined mb-1">pause_circle</span>
+                                <span class="text-xs">ESPERAR</span>
+                                <span class="text-[10px] opacity-70">(F6)</span>
                             </button>
                             <button onclick="POS.cancelSale()" class="bg-tertiary/10 hover:bg-tertiary/20 text-tertiary py-4 rounded-xl font-bold transition-all flex flex-col items-center leading-tight">
                                 <span class="material-symbols-outlined mb-1">delete_sweep</span>
@@ -882,6 +887,70 @@ tailwind.config = {
     </div>
 </div>
 
+<!-- Notification / Multi-purpose Modal -->
+<div id="modalNotif" class="modal-overlay fixed inset-0 bg-black/50 z-[80] items-center justify-center" onclick="if(event.target===this)this.classList.remove('active')">
+    <div class="bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden max-h-[80vh] overflow-y-auto">
+        <div class="bg-primary p-4 text-white flex items-center justify-between">
+            <h3 class="font-headline font-bold text-lg uppercase">Panel</h3>
+            <button onclick="$('modalNotif').classList.remove('active')" class="p-1 hover:bg-white/20 rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-white">close</span>
+            </button>
+        </div>
+        <div id="notifModalContent" class="p-6"></div>
+    </div>
+</div>
+
+<!-- Calculator Panel (Slide-out) -->
+<div id="calcPanel" class="modal-overlay fixed top-0 right-0 h-full z-[90] items-start justify-end" onclick="if(event.target===this)POS.toggleCalcPanel()">
+    <div class="bg-surface-container-lowest rounded-l-2xl shadow-2xl w-80 h-full flex flex-col overflow-hidden">
+        <div class="bg-slate-800 p-4 text-white flex items-center justify-between shrink-0">
+            <h3 class="font-headline font-bold text-lg uppercase flex items-center gap-2">
+                <span class="material-symbols-outlined text-xl">calculate</span> Calculadora
+            </h3>
+            <button onclick="POS.toggleCalcPanel()" class="p-1 hover:bg-white/20 rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-white">close</span>
+            </button>
+        </div>
+        <!-- Display -->
+        <div class="p-4 bg-surface-container-low shrink-0">
+            <div id="calcHistory" class="h-12 overflow-hidden mb-1 space-y-0.5"></div>
+            <div class="flex items-end justify-between">
+                <input id="calcInput" class="flex-1 bg-transparent text-3xl font-black font-headline tabular-nums text-on-surface border-none focus:ring-0" placeholder="0" onkeydown="POS.calcInputKey(event)" autofocus/>
+                <span id="calcResult" class="text-lg font-bold text-outline tabular-nums ml-2">0</span>
+            </div>
+        </div>
+        <!-- Buttons -->
+        <div class="flex-1 grid grid-cols-4 gap-1 p-3 bg-surface-container-highest/30">
+            <button onclick="POS.calcClear()" class="bg-tertiary/10 hover:bg-tertiary/20 text-tertiary font-bold text-lg py-4 rounded-xl transition-all">C</button>
+            <button onclick="POS.calcBtn('(')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">(</button>
+            <button onclick="POS.calcBtn(')')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">)</button>
+            <button onclick="POS.calcBtn('/')" class="bg-primary/10 hover:bg-primary/20 text-primary font-bold text-lg py-4 rounded-xl transition-all">÷</button>
+            <button onclick="POS.calcBtn('7')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">7</button>
+            <button onclick="POS.calcBtn('8')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">8</button>
+            <button onclick="POS.calcBtn('9')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">9</button>
+            <button onclick="POS.calcBtn('*')" class="bg-primary/10 hover:bg-primary/20 text-primary font-bold text-lg py-4 rounded-xl transition-all">×</button>
+            <button onclick="POS.calcBtn('4')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">4</button>
+            <button onclick="POS.calcBtn('5')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">5</button>
+            <button onclick="POS.calcBtn('6')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">6</button>
+            <button onclick="POS.calcBtn('-')" class="bg-primary/10 hover:bg-primary/20 text-primary font-bold text-lg py-4 rounded-xl transition-all">−</button>
+            <button onclick="POS.calcBtn('1')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">1</button>
+            <button onclick="POS.calcBtn('2')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">2</button>
+            <button onclick="POS.calcBtn('3')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">3</button>
+            <button onclick="POS.calcBtn('+')" class="bg-primary/10 hover:bg-primary/20 text-primary font-bold text-lg py-4 rounded-xl transition-all">+</button>
+            <button onclick="POS.calcBtn('0')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">0</button>
+            <button onclick="POS.calcBtn('.')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">.</button>
+            <button onclick="POS.calcBtn('%')" class="bg-surface-container-lowest hover:bg-surface-container-highest font-bold text-lg py-4 rounded-xl transition-all">%</button>
+            <button onclick="POS.calcEval()" class="bg-secondary hover:brightness-110 text-white font-bold text-lg py-4 rounded-xl transition-all shadow-lg shadow-secondary/20">=</button>
+        </div>
+        <!-- Actions -->
+        <div class="p-3 space-y-2 shrink-0 border-t border-outline-variant/20">
+            <button onclick="POS.calcSendToTotal()" class="w-full bg-primary hover:bg-primary-container text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                <span class="material-symbols-outlined text-sm">add_shopping_cart</span> Enviar a Venta
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- ==================== JAVASCRIPT ==================== -->
 <script>
 // ======================== DATA LAYER ========================
@@ -1365,8 +1434,152 @@ const POS = {
     showNotifications() {
         const products = DB.get('products');
         const alerts = products.filter(p => p.stock <= p.minStock);
-        if (alerts.length === 0) { toast('Sin alertas de stock', 'info'); return; }
-        alert('⚠️ ALERTAS DE STOCK BAJO:\n\n' + alerts.map(p => `• ${p.name} (${p.stock}/${p.minStock})`).join('\n'));
+        const sales = DB.get('sales') || [];
+        const box = DB.get('box') || {};
+        let html = '<div class="space-y-3">';
+        html += '<h3 class="font-headline font-bold text-lg uppercase flex items-center gap-2"><span class="material-symbols-outlined text-primary">notifications_active</span> Centro de Alertas</h3>';
+        // Stock bajo
+        if (alerts.length > 0) {
+            html += '<div class="bg-tertiary-fixed/30 p-3 rounded-lg space-y-1"><p class="text-[10px] font-black uppercase tracking-widest text-tertiary">Stock Bajo (' + alerts.length + ')</p>';
+            alerts.slice(0,5).forEach(p => { html += '<p class="text-sm font-medium text-on-surface">• ' + p.name + ' <span class="text-tertiary font-bold">(' + p.stock + '/' + p.minStock + ')</span></p>'; });
+            html += '</div>';
+        }
+        // Caja status
+        if (box.isOpen) {
+            html += '<div class="bg-secondary-container/30 p-3 rounded-lg"><p class="text-[10px] font-black uppercase tracking-widest text-secondary">Caja Abierta</p><p class="text-sm font-medium">Desde: ' + (box.openedAt ? new Date(box.openedAt).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}) : '--') + ' &bull; ' + sales.length + ' ventas</p></div>';
+        } else {
+            html += '<div class="bg-surface-container-low p-3 rounded-lg"><p class="text-[10px] font-black uppercase tracking-widest text-outline">Caja Cerrada</p><p class="text-sm font-medium">Abra la caja para iniciar ventas</p></div>';
+        }
+        if (alerts.length === 0 && !box.isOpen) {
+            html += '<div class="text-center py-4"><span class="material-symbols-outlined text-4xl text-outline">check_circle</span><p class="text-sm text-outline mt-2">Sin alertas pendientes</p></div>';
+        }
+        html += '</div>';
+        $('notifModalContent').innerHTML = html;
+        $('modalNotif').classList.add('active');
+    },
+
+    showPendingSales() {
+        const pending = JSON.parse(localStorage.getItem('mercado_pending_sales') || '[]');
+        if (pending.length === 0) { toast('No hay ventas pendientes', 'info'); return; }
+        let html = '<div class="space-y-3">';
+        html += '<h3 class="font-headline font-bold text-lg uppercase flex items-center gap-2"><span class="material-symbols-outlined text-primary">pending_actions</span> Ventas Pendientes (' + pending.length + ')</h3>';
+        pending.forEach((s, i) => {
+            html += '<div class="bg-surface-container-low p-4 rounded-lg flex items-center justify-between"><div><p class="font-bold text-sm">Folio: ' + s.folio + '</p><p class="text-xs text-on-surface-variant">' + (s.items ? s.items.length : 0) + ' artículos &bull; $' + s.total.toFixed(2) + '</p></div><div class="flex gap-2"><button onclick="POS.resumePending(' + i + ')" class="px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg">Reanudar</button><button onclick="POS.deletePending(' + i + ')" class="px-3 py-1.5 bg-tertiary text-white text-xs font-bold rounded-lg">Eliminar</button></div></div>';
+        });
+        html += '</div>';
+        $('notifModalContent').innerHTML = html;
+        $('modalNotif').classList.add('active');
+    },
+
+    resumePending(idx) {
+        const pending = JSON.parse(localStorage.getItem('mercado_pending_sales') || '[]');
+        if (pending[idx]) {
+            this.cart = pending[idx].items || [];
+            pending.splice(idx, 1);
+            localStorage.setItem('mercado_pending_sales', JSON.stringify(pending));
+            this.renderCart();
+            $('modalNotif').classList.remove('active');
+            toast('Venta reanudada', 'success');
+        }
+    },
+
+    deletePending(idx) {
+        const pending = JSON.parse(localStorage.getItem('mercado_pending_sales') || '[]');
+        pending.splice(idx, 1);
+        localStorage.setItem('mercado_pending_sales', JSON.stringify(pending));
+        this.showPendingSales();
+    },
+
+    holdSale() {
+        if (this.cart.length === 0) { toast('No hay productos en la venta', 'info'); return; }
+        const pending = JSON.parse(localStorage.getItem('mercado_pending_sales') || '[]');
+        pending.push({ folio: 'P' + String(pending.length + 1).padStart(3, '0'), items: [...this.cart], total: this.calcTotal(), date: new Date().toISOString() });
+        localStorage.setItem('mercado_pending_sales', JSON.stringify(pending));
+        this.cart = []; this.renderCart();
+        toast('Venta puesta en espera', 'success');
+    },
+
+    showCustomerSearch() {
+        let html = '<div class="space-y-3">';
+        html += '<h3 class="font-headline font-bold text-lg uppercase flex items-center gap-2"><span class="material-symbols-outlined text-primary">person_search</span> Buscar Cliente</h3>';
+        html += '<div class="relative"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span><input id="customerSearchInput" class="w-full pl-10 pr-4 py-3 bg-surface-container-low border-none focus:ring-2 focus:ring-primary rounded-lg font-medium" placeholder="Buscar por nombre o teléfono..." oninput="POS.filterCustomers(this.value)"/></div>';
+        const customers = JSON.parse(localStorage.getItem('mercado_customers') || '[]');
+        html += '<div id="customerResults" class="space-y-2 max-h-48 overflow-y-auto">';
+        if (customers.length === 0) {
+            html += '<p class="text-center text-sm text-outline py-4">No hay clientes registrados</p>';
+        } else {
+            customers.forEach(c => { html += '<div class="bg-surface-container-low p-3 rounded-lg flex items-center justify-between"><div><p class="font-bold text-sm">' + c.name + '</p><p class="text-xs text-on-surface-variant">' + (c.phone || 'Sin teléfono') + '</p></div><span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded">' + (c.visits || 0) + ' visitas</span></div>'; });
+        }
+        html += '</div>';
+        html += '<div class="border-t border-outline-variant/20 pt-3"><button onclick="POS.addQuickCustomer()" class="w-full py-2 bg-primary/10 hover:bg-primary/20 text-primary font-bold rounded-lg text-sm flex items-center justify-center gap-2"><span class="material-symbols-outlined text-sm">person_add</span> Registrar Cliente Rápido</button></div>';
+        html += '</div>';
+        $('notifModalContent').innerHTML = html;
+        $('modalNotif').classList.add('active');
+        setTimeout(() => { const el = $('customerSearchInput'); if (el) el.focus(); }, 100);
+    },
+
+    filterCustomers(query) {
+        const customers = JSON.parse(localStorage.getItem('mercado_customers') || '[]');
+        const filtered = query ? customers.filter(c => c.name.toLowerCase().includes(query.toLowerCase()) || (c.phone && c.phone.includes(query))) : customers;
+        const container = $('customerResults');
+        if (filtered.length === 0) { container.innerHTML = '<p class="text-center text-sm text-outline py-4">Sin resultados</p>'; return; }
+        container.innerHTML = filtered.map(c => '<div class="bg-surface-container-low p-3 rounded-lg flex items-center justify-between"><div><p class="font-bold text-sm">' + c.name + '</p><p class="text-xs text-on-surface-variant">' + (c.phone || 'Sin teléfono') + '</p></div><span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded">' + (c.visits || 0) + ' visitas</span></div>').join('');
+    },
+
+    addQuickCustomer() {
+        const name = prompt('Nombre del cliente:');
+        if (!name || !name.trim()) return;
+        const phone = prompt('Teléfono (opcional):') || '';
+        const customers = JSON.parse(localStorage.getItem('mercado_customers') || '[]');
+        customers.push({ name: name.trim(), phone: phone.trim(), visits: 1, registered: new Date().toISOString() });
+        localStorage.setItem('mercado_customers', JSON.stringify(customers));
+        toast('Cliente registrado: ' + name.trim(), 'success');
+        this.showCustomerSearch();
+    },
+
+    toggleCalcPanel() {
+        const panel = $('calcPanel');
+        panel.classList.toggle('active');
+        if (panel.classList.contains('active')) { $('calcInput').focus(); }
+    },
+
+    calcInputKey(e) {
+        if (e.key === 'Enter') { this.calcEval(); }
+    },
+
+    calcBtn(val) {
+        const inp = $('calcInput');
+        inp.value += val;
+        inp.focus();
+    },
+
+    calcClear() {
+        $('calcInput').value = '';
+        $('calcResult').textContent = '0';
+        $('calcInput').focus();
+    },
+
+    calcEval() {
+        const expr = $('calcInput').value.trim();
+        if (!expr) return;
+        try {
+            const result = Function('"use strict"; return (' + expr.replace(/[^0-9+\-*/.()% ]/g, '') + ')')();
+            $('calcResult').textContent = '= ' + (typeof result === 'number' ? result.toFixed(2) : result);
+            $('calcHistory').innerHTML = '<div class="text-xs text-on-surface-variant">' + expr + ' = <span class="font-bold text-primary">' + (typeof result === 'number' ? result.toFixed(2) : result) + '</span></div>' + ($('calcHistory').innerHTML || '');
+        } catch (err) {
+            $('calcResult').textContent = 'Error';
+        }
+    },
+
+    calcSendToTotal() {
+        const resultText = $('calcResult').textContent.replace('=', '').trim();
+        const val = parseFloat(resultText);
+        if (!isNaN(val) && val > 0) {
+            this.cart.push({ code: 'MANUAL', name: 'Monto Calculadora', qty: 1, price: val, discount: 0 });
+            this.renderCart();
+            this.toggleCalcPanel();
+            toast('$' + val.toFixed(2) + ' agregado a la venta', 'success');
+        }
     },
 
     logout() {
@@ -1825,11 +2038,15 @@ document.addEventListener('keydown', function(e) {
     else if (e.key === 'F3' && !isInput) { e.preventDefault(); navigateTo('reportes'); }
     else if (e.key === 'F4' && !isInput) { e.preventDefault(); navigateTo('configuracion'); }
     else if (e.key === 'F5') { e.preventDefault(); toast('Cajón abierto', 'info'); }
-    else if (e.key === 'F8') { e.preventDefault(); toast('Calculadora no disponible', 'info'); }
+    else if (e.key === 'F6' && !isInput) { e.preventDefault(); POS.showPendingSales(); }
+    else if (e.key === 'F7' && !isInput) { e.preventDefault(); POS.showCustomerSearch(); }
+    else if (e.key === 'F8') { e.preventDefault(); POS.toggleCalcPanel(); }
     else if (e.key === 'F9') { e.preventDefault(); POS.openDiscountModal(); }
     else if (e.key === 'F10') { e.preventDefault(); POS.cancelSale(); }
     else if (e.key === 'F12') { e.preventDefault(); POS.openPaymentModal(); }
     else if (e.key === 'Escape') {
+        $('calcPanel').classList.remove('active');
+        $('modalNotif').classList.remove('active');
         document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
         $('searchDropdown').classList.remove('active');
     }
