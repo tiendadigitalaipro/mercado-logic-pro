@@ -386,21 +386,31 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
                     <div class="space-y-4 mb-auto">
                         <div class="flex justify-between items-center text-on-surface-variant">
                             <span class="text-sm font-medium">Subtotal</span>
-                            <span id="cartSubtotal" class="font-bold tabular-nums">$ 0.00</span>
+                            <div class="text-right">
+                                <span id="cartSubtotal" class="font-bold tabular-nums">$ 0.00</span>
+                                <div id="cartSubtotalBs" class="text-[10px] font-bold text-emerald-600 tabular-nums"></div>
+                            </div>
                         </div>
                         <div class="flex justify-between items-center text-on-surface-variant">
                             <span class="text-sm font-medium">Descuento Global</span>
-                            <span id="cartDiscount" class="font-bold tabular-nums text-tertiary">-$ 0.00</span>
+                            <div class="text-right">
+                                <span id="cartDiscount" class="font-bold tabular-nums text-tertiary">-$ 0.00</span>
+                                <div id="cartDiscountBs" class="text-[10px] font-bold text-tertiary tabular-nums"></div>
+                            </div>
                         </div>
                         <div class="flex justify-between items-center text-on-surface-variant">
                             <span class="text-sm font-medium">IVA (<span id="taxRateDisplay">16</span>%)</span>
-                            <span id="cartTax" class="font-bold tabular-nums">$ 0.00</span>
+                            <div class="text-right">
+                                <span id="cartTax" class="font-bold tabular-nums">$ 0.00</span>
+                                <div id="cartTaxBs" class="text-[10px] font-bold text-emerald-600 tabular-nums"></div>
+                            </div>
                         </div>
                         <div class="border-t border-outline-variant/50 pt-4 mt-4">
                             <span class="text-[10px] font-black uppercase tracking-widest text-outline block mb-1">Total a Pagar</span>
-                            <div id="cartTotal" class="text-5xl font-black text-on-surface font-headline tracking-tighter tabular-nums leading-none">
+                            <div id="cartTotal" class="text-4xl font-black text-on-surface font-headline tracking-tighter tabular-nums leading-none">
                                 $ 0.00
                             </div>
+                            <div id="cartTotalBs" class="text-xl font-black text-emerald-600 tabular-nums tracking-tight mt-1">Bs. 0.00</div>
                         </div>
                     </div>
                     <div class="space-y-3 mt-8">
@@ -583,6 +593,7 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
                     <div>
                         <p class="text-[10px] font-bold text-white/70 uppercase tracking-widest leading-none mb-1">Valor Inventario</p>
                         <p id="invStatValue" class="text-xl font-black text-white font-headline">$0</p>
+                        <p id="invStatValueBs" class="text-[10px] font-bold text-white/70 tabular-nums"></p>
                     </div>
                 </div>
             </section>
@@ -615,7 +626,8 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
                 <div class="md:col-span-2 bg-primary-container text-on-primary-container p-6 rounded-xl relative overflow-hidden shadow-sm">
                     <div class="relative z-10">
                         <p class="text-sm font-bold uppercase tracking-widest opacity-80 mb-2">Ventas Totales Brutas</p>
-                        <h2 id="reportTotalSales" class="text-6xl font-black font-headline tabular-nums">$0.00</h2>
+                        <h2 id="reportTotalSales" class="text-5xl font-black font-headline tabular-nums">$0.00</h2>
+                        <div id="reportTotalSalesBs" class="text-lg font-black text-emerald-600 tabular-nums mt-1">Bs. 0.00</div>
                         <div class="mt-4 flex items-center gap-2 text-sm">
                             <span class="material-symbols-outlined">receipt_long</span>
                             <span id="reportTransCount" class="font-bold">0 transacciones</span>
@@ -629,7 +641,8 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
                             <span class="material-symbols-outlined text-secondary">payments</span>
                             <p class="text-xs font-bold uppercase text-outline tracking-wider">Efectivo</p>
                         </div>
-                        <h3 id="reportCash" class="text-3xl font-black font-headline tabular-nums text-on-surface">$0.00</h3>
+                        <h3 id="reportCash" class="text-2xl font-black font-headline tabular-nums text-on-surface">$0.00</h3>
+                        <div id="reportCashBs" class="text-[10px] font-bold text-emerald-600 tabular-nums"></div>
                     </div>
                     <div class="h-1 w-full bg-surface-container-highest mt-4 rounded-full overflow-hidden">
                         <div id="reportCashBar" class="h-full bg-secondary transition-all" style="width:0%"></div>
@@ -641,7 +654,8 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
                             <span class="material-symbols-outlined text-primary">credit_card</span>
                             <p class="text-xs font-bold uppercase text-outline tracking-wider">Tarjeta / QR</p>
                         </div>
-                        <h3 id="reportCard" class="text-3xl font-black font-headline tabular-nums text-on-surface">$0.00</h3>
+                        <h3 id="reportCard" class="text-2xl font-black font-headline tabular-nums text-on-surface">$0.00</h3>
+                        <div id="reportCardBs" class="text-[10px] font-bold text-emerald-600 tabular-nums"></div>
                     </div>
                     <div class="h-1 w-full bg-surface-container-highest mt-4 rounded-full overflow-hidden">
                         <div id="reportCardBar" class="h-full bg-primary transition-all" style="width:0%"></div>
@@ -659,6 +673,7 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-xs font-medium text-on-surface-variant">Ticket Promedio</span>
                             <span id="reportAvgTicket" class="text-sm font-bold tabular-nums">$0.00</span>
+                            <div id="reportAvgTicketBs" class="text-[10px] font-bold text-emerald-600 tabular-nums"></div>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-xs font-medium text-on-surface-variant">Transacciones</span>
@@ -784,6 +799,32 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
                         </div>
                     </div>
                 </section>
+                <!-- Tasa de Cambio -->
+                <section class="md:col-span-4 bg-gradient-to-br from-emerald-50 to-green-50 p-6 rounded-xl space-y-4 border border-emerald-200/30">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="material-symbols-outlined text-emerald-600">currency_exchange</span>
+                        <h4 class="font-headline font-bold text-lg uppercase tracking-wider text-emerald-800">Multi Moneda</h4>
+                    </div>
+                    <p class="text-xs text-emerald-600 font-medium">Tasa de cambio para cálculo en Bolívares (Bs).</p>
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-outline uppercase">Tasa de Cambio (1 USD = ? Bs)</label>
+                        <input id="cfgTasaCambio" class="w-full bg-white border border-emerald-200 focus:ring-2 focus:ring-emerald-400 p-3 rounded-lg font-black text-lg tabular-nums text-emerald-700 text-center" type="number" step="0.01" value="50.00" oninput="CFG.updateTasaEjemplo()"/>
+                    </div>
+                    <div class="bg-white rounded-lg p-3 border border-emerald-200/50 text-center">
+                        <p class="text-[9px] font-bold text-outline uppercase">Ejemplo</p>
+                        <p id="tasaEjemplo" class="text-sm font-black text-emerald-700 tabular-nums">$ 1.00 = Bs. 50.00</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-center">
+                        <div class="bg-blue-50 rounded-lg p-2 border border-blue-200/30">
+                            <p class="text-[9px] font-bold text-blue-600 uppercase">Dólar ($)</p>
+                            <p class="text-sm font-black text-blue-800">$ 10.00</p>
+                        </div>
+                        <div class="bg-emerald-50 rounded-lg p-2 border border-emerald-200/30">
+                            <p class="text-[9px] font-bold text-emerald-600 uppercase">Bolívar (Bs)</p>
+                            <p id="tasaEjemploBs" class="text-sm font-black text-emerald-800">Bs. 500.00</p>
+                        </div>
+                    </div>
+                </section>
                 <!-- Personalización Visual -->
                 <section class="md:col-span-4 bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl space-y-4 border border-purple-200/30">
                     <div class="flex items-center gap-3 mb-2">
@@ -890,6 +931,7 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
             <div class="text-center">
                 <p class="text-[10px] font-bold text-outline uppercase tracking-widest">Total a Cobrar</p>
                 <p id="paymentTotal" class="text-4xl font-black text-on-surface font-headline tabular-nums">$ 0.00</p>
+                <p id="paymentTotalBs" class="text-xl font-black text-emerald-600 tabular-nums mt-1">Bs. 0.00</p>
             </div>
             <div class="grid grid-cols-3 gap-3">
                 <button onclick="POS.selectPaymentMethod('Efectivo')" class="payment-method-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-outline-variant/30 hover:border-secondary hover:bg-secondary/5 transition-all" data-method="Efectivo">
@@ -1087,6 +1129,12 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
                         <label class="text-[10px] font-bold text-outline uppercase">Precio Venta PVP</label>
                         <input id="prodPrice" class="w-full bg-white border-2 border-primary/30 focus:ring-2 focus:ring-primary p-3 rounded-lg font-black tabular-nums text-primary" type="number" step="0.01" placeholder="0.00" oninput="INV.calcMargin()"/>
                     </div>
+                </div>
+                <!-- Precio en Bs resaltado -->
+                <div id="prodPriceBs" class="bg-gradient-to-r from-emerald-500 to-green-500 rounded-xl p-4 text-white text-center shadow-lg shadow-emerald-200 hidden">
+                    <p class="text-[10px] font-bold uppercase tracking-widest opacity-90">Precio en Bolívares</p>
+                    <p class="text-3xl font-black tabular-nums tracking-tight">Bs. 0.00</p>
+                    <p class="text-[10px] font-medium opacity-80 mt-1">Tasa: <span id="prodTasaDisplay">50.00</span> Bs/$</p>
                 </div>
                 <!-- IVA checkbox -->
                 <div class="flex items-center gap-3">
@@ -1747,6 +1795,7 @@ const DB = {
             currency: '$',
             taxRate: 16,
             taxIncluded: false,
+            tasaCambio: 50.00,
             printerPort: 'USB 001 (Epson TM-T88)',
             autoPrint: false
         },
@@ -1770,6 +1819,10 @@ const DB = {
 
 // ======================== UTILITY ========================
 function formatMoney(n) { return '$ ' + (n || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function getTasa() { try { const c = DB.get('config'); return c.tasaCambio || 50.00; } catch(e) { return 50.00; } }
+function formatBs(n) { const tasa = getTasa(); return 'Bs. ' + ((n || 0) * tasa).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function formatMoneyDual(n) { return '<span class="text-on-surface">' + formatMoney(n) + '</span>'; }
+function formatMoneyBs(n) { return '<span class="text-emerald-600 font-black">' + formatBs(n) + '</span>'; }
 function toast(msg, type='success') {
     const c = $('toastContainer');
     const t = document.createElement('div');
@@ -1859,6 +1912,7 @@ const POS = {
                     </div>
                     <div class="text-right">
                         <p class="font-bold text-primary tabular-nums">${formatMoney(p.price)}</p>
+                        <p class="text-[10px] font-bold text-emerald-600 tabular-nums">${formatBs(p.price)}</p>
                         <p class="text-[10px] text-outline">${p.stock} pz${p.stock!==1?'s':''}</p>
                     </div>
                 </div>
@@ -1961,8 +2015,8 @@ const POS = {
                     <div class="col-span-1 text-center">
                         <input type="number" value="${item.qty}" min="0" step="1" class="w-14 text-center bg-transparent font-bold tabular-nums border-b border-outline-variant/30 focus:border-primary" onchange="POS.setCartQty(${i}, this.value)" onclick="event.stopPropagation()"/>
                     </div>
-                    <div class="col-span-2 text-right tabular-nums">${formatMoney(item.price)}</div>
-                    <div class="col-span-2 text-right font-bold tabular-nums text-primary">${formatMoney(item.price * item.qty)}</div>
+                    <div class="col-span-2 text-right tabular-nums">${formatMoney(item.price)}<div class="text-[10px] font-bold text-emerald-600">${formatBs(item.price)}</div></div>
+                    <div class="col-span-2 text-right font-bold tabular-nums text-primary">${formatMoney(item.price * item.qty)}<div class="text-[10px] font-bold text-emerald-600">${formatBs(item.price * item.qty)}</div></div>
                 </div>
             `).join('');
         }
@@ -1990,6 +2044,13 @@ const POS = {
         $('cartTotal').textContent = formatMoney(total);
         $('cartCount').textContent = this.cart.reduce((s, i) => s + i.qty, 0) + ' ARTÍCULOS';
         $('taxRateDisplay').textContent = config.taxRate;
+
+        // Bolívares
+        const tasa = config.tasaCambio || 50.00;
+        if ($('cartSubtotalBs')) $('cartSubtotalBs').textContent = formatBs(subtotal);
+        if ($('cartDiscountBs')) $('cartDiscountBs').textContent = '-' + formatBs(discountAmt);
+        if ($('cartTaxBs')) $('cartTaxBs').textContent = formatBs(taxAmt);
+        if ($('cartTotalBs')) $('cartTotalBs').textContent = formatBs(total);
     },
 
     openDiscountModal() {
@@ -2036,6 +2097,7 @@ const POS = {
         const config = DB.get('config');
         const tax = config.taxIncluded ? 0 : total * (config.taxRate / 100);
         $('paymentTotal').textContent = formatMoney(total + tax);
+        if ($('paymentTotalBs')) $('paymentTotalBs').textContent = formatBs(total + tax);
         $('cashSection').classList.add('hidden');
         $('cashReceived').value = '';
         $('changeAmount').textContent = '$ 0.00';
@@ -2139,17 +2201,20 @@ const POS = {
                 <div class="border-t border-dashed border-outline-variant/30 pt-2 mt-2 space-y-1">
                     ${sale.items.map(it => `
                         <div class="flex justify-between"><span class="truncate mr-2">${it.name} x${it.qty}</span><span class="tabular-nums">${formatMoney(it.price*it.qty)}</span></div>
+                        <div class="flex justify-between text-emerald-600 text-[10px]"><span></span><span class="tabular-nums">${formatBs(it.price*it.qty)}</span></div>
                     `).join('')}
                 </div>
                 <div class="border-t border-dashed border-outline-variant/30 pt-2 mt-2 space-y-1">
                     <div class="flex justify-between"><span>Subtotal</span><span class="tabular-nums">${formatMoney(sale.subtotal)}</span></div>
+                    <div class="flex justify-between text-emerald-600 text-[10px]"><span></span><span class="tabular-nums">${formatBs(sale.subtotal)}</span></div>
                     ${sale.discount > 0 ? `<div class="flex justify-between text-tertiary"><span>Descuento</span><span class="tabular-nums">-${formatMoney(sale.discount)}</span></div>` : ''}
                     <div class="flex justify-between"><span>IVA (${config.taxRate}%)</span><span class="tabular-nums">${formatMoney(sale.tax)}</span></div>
                     <div class="flex justify-between font-bold text-base border-t border-on-surface pt-1 mt-1"><span>TOTAL</span><span class="tabular-nums">${formatMoney(sale.total)}</span></div>
+                    <div class="flex justify-between font-black text-emerald-600 text-sm"><span>TOTAL Bs.</span><span class="tabular-nums">${formatBs(sale.total)}</span></div>
                 </div>
                 <div class="border-t border-dashed border-outline-variant/30 pt-2 mt-2">
                     <div class="flex justify-between"><span>Método</span><span class="font-bold">${sale.method}</span></div>
-                    ${sale.method==='Efectivo'?`<div class="flex justify-between"><span>Efectivo</span><span class="tabular-nums">${formatMoney(sale.cashReceived)}</span></div><div class="flex justify-between"><span>Cambio</span><span class="tabular-nums font-bold text-secondary">${formatMoney(sale.change)}</span></div>`:''}
+                    ${sale.method==='Efectivo'?`<div class="flex justify-between"><span>Efectivo</span><span class="tabular-nums">${formatMoney(sale.cashReceived)}</span></div><div class="flex justify-between text-emerald-600 text-[10px]"><span></span><span class="tabular-nums">${formatBs(sale.cashReceived)}</span></div><div class="flex justify-between"><span>Cambio</span><span class="tabular-nums font-bold text-secondary">${formatMoney(sale.change)}</span></div>`:''}
                 </div>
                 <div class="text-center pt-2 text-[10px] text-outline">¡Gracias por su compra!</div>
             </div>
@@ -2422,8 +2487,8 @@ const INV = {
                             ? `<span class="px-2 py-0.5 bg-error-container text-on-error-container text-[11px] font-bold rounded tabular-nums">${p.stock} pzs</span>`
                             : `<span class="tabular-nums text-sm font-medium">${p.stock} pzs</span>`}
                     </td>
-                    <td class="px-4 py-3 text-right tabular-nums text-sm font-medium">${formatMoney(p.cost)}</td>
-                    <td class="px-4 py-3 text-right tabular-nums text-sm font-bold text-primary">${formatMoney(p.price)}</td>
+                    <td class="px-4 py-3 text-right tabular-nums text-sm font-medium">${formatMoney(p.cost)}<div class="text-[10px] font-bold text-emerald-600">${formatBs(p.cost)}</div></td>
+                    <td class="px-4 py-3 text-right tabular-nums text-sm font-bold text-primary">${formatMoney(p.price)}<div class="text-[10px] font-bold text-emerald-600">${formatBs(p.price)}</div></td>
                     <td class="px-4 py-3"><span class="text-[10px] font-bold px-2 py-1 bg-surface-container-low rounded-full uppercase">${p.category}</span></td>
                     <td class="px-4 py-3">
                         <div class="flex items-center justify-center gap-1">
@@ -2446,6 +2511,7 @@ const INV = {
         $('invStatProducts').textContent = allProducts.length;
         $('invStatAlerts').textContent = lowStock.length;
         $('invStatValue').textContent = formatMoney(invValue);
+        if ($('invStatValueBs')) $('invStatValueBs').textContent = formatBs(invValue);
 
         // Pagination
         let pagination = `<button onclick="INV.goPage(${this.currentPage-1})" class="p-2 hover:bg-surface-variant rounded transition-all text-outline ${this.currentPage===1?'opacity-30 pointer-events-none':''}"><span class="material-symbols-outlined text-lg">chevron_left</span></button>`;
@@ -2542,6 +2608,7 @@ const INV = {
         const cost = parseFloat($('prodCost').value) || 0;
         const price = parseFloat($('prodPrice').value) || 0;
         const summary = $('profitSummary');
+        const bsDisplay = $('prodPriceBs');
         if (cost > 0 && price > 0) {
             summary.classList.remove('hidden');
             const profit = price - cost;
@@ -2550,8 +2617,16 @@ const INV = {
             $('profitAmount').textContent = '$ ' + profit.toFixed(2);
             $('realMargin').textContent = marginPct + '%';
             $('markupDisplay').textContent = markup + 'x';
+            // Show Bs price
+            const tasa = getTasa();
+            if (bsDisplay) {
+                bsDisplay.classList.remove('hidden');
+                bsDisplay.querySelector('p.text-3xl').textContent = 'Bs. ' + (price * tasa).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                $('prodTasaDisplay').textContent = tasa.toFixed(2);
+            }
         } else {
             summary.classList.add('hidden');
+            if (bsDisplay) bsDisplay.classList.add('hidden');
         }
     },
 
@@ -2739,6 +2814,12 @@ const RPT = {
         $('reportAvgTicket').textContent = formatMoney(avgTicket);
         $('reportTotalTrans').textContent = totalTrans + ' ops';
 
+        // Bolívares
+        if ($('reportTotalSalesBs')) $('reportTotalSalesBs').textContent = formatBs(totalSales);
+        if ($('reportCashBs')) $('reportCashBs').textContent = formatBs(cashSales);
+        if ($('reportCardBs')) $('reportCardBs').textContent = formatBs(cardSales);
+        if ($('reportAvgTicketBs')) $('reportAvgTicketBs').textContent = formatBs(avgTicket);
+
         const totalPay = cashSales + cardSales;
         $('reportCashBar').style.width = totalPay > 0 ? (cashSales / totalPay * 100) + '%' : '0%';
         $('reportCardBar').style.width = totalPay > 0 ? (cardSales / totalPay * 100) + '%' : '0%';
@@ -2772,7 +2853,7 @@ const RPT = {
                     <td class="px-4 py-3 text-sm text-on-surface-variant tabular-nums">${d.toLocaleTimeString('es-MX')}</td>
                     <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${methodClass} uppercase">${s.method}</span></td>
                     <td class="px-4 py-3 text-sm text-on-surface-variant tabular-nums">${s.items.reduce((s,i)=>s+i.qty,0)}</td>
-                    <td class="px-4 py-3 text-sm font-black text-right tabular-nums text-on-surface">${formatMoney(s.total)}</td>
+                    <td class="px-4 py-3 text-sm font-black text-right tabular-nums text-on-surface">${formatMoney(s.total)}<div class="text-[10px] font-bold text-emerald-600">${formatBs(s.total)}</div></td>
                 </tr>`;
             }).join('');
     },
@@ -2799,9 +2880,18 @@ REPORTE DE CIERRE DE CAJA
 ==========================
 Fecha: ${new Date().toLocaleDateString('es-MX')}
 Transacciones: ${todaySales.length}
-Total Bruto: ${formatMoney(total)}
-Efectivo: ${formatMoney(cash)}
-Tarjeta/QR: ${formatMoney(card)}
+
+TOTAL BRUTO:
+  USD: ${formatMoney(total)}
+  Bs:  ${formatBs(total)}
+
+EFECTIVO:
+  USD: ${formatMoney(cash)}
+  Bs:  ${formatBs(cash)}
+
+TARJETA/QR:
+  USD: ${formatMoney(card)}
+  Bs:  ${formatBs(card)}
 ==========================
         `;
         const w = window.open('', '_blank', 'width=400,height=400');
@@ -2829,6 +2919,8 @@ const CFG = {
         $('cfgPrinterPort').value = config.printerPort || '';
         $('cfgAutoPrint').checked = config.autoPrint || false;
         $('cfgCurrencySymbol').textContent = config.currency || '$';
+        $('cfgTasaCambio').value = config.tasaCambio || 50.00;
+        this.updateTasaEjemplo();
         this.renderUsers();
         this.renderTicketPreview();
     },
@@ -2842,11 +2934,17 @@ const CFG = {
         config.email = $('cfgEmail').value.trim();
         config.taxRate = parseFloat($('cfgTaxRate').value) || 16;
         config.taxIncluded = $('cfgTaxIncluded').checked;
-        config.printerPort = $('cfgPrinterPort').value;
-        config.autoPrint = $('cfgAutoPrint').checked;
+        config.tasaCambio = parseFloat($('cfgTasaCambio').value) || 50.00;
         DB.set('config', config);
+        this.updateTasaEjemplo();
         this.renderTicketPreview();
         toast('Configuración guardada');
+    },
+
+    updateTasaEjemplo() {
+        const tasa = parseFloat($('cfgTasaCambio').value) || 50.00;
+        if ($('tasaEjemplo')) $('tasaEjemplo').textContent = '$ 1.00 = Bs. ' + tasa.toFixed(2);
+        if ($('tasaEjemploBs')) $('tasaEjemploBs').textContent = 'Bs. ' + (10 * tasa).toFixed(2);
     },
 
     renderUsers() {
