@@ -6,6 +6,15 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
+<script>
+// Cache buster - version 3 - forces reload to get latest EMBEDDED_LICENSES
+(function(){
+    var v = 'v3';
+    var sv = sessionStorage.getItem('mlp_version');
+    if (sv && sv !== v) { sessionStorage.removeItem('mlp_version'); location.reload(true); }
+    else { sessionStorage.setItem('mlp_version', v); }
+})();
+</script>
 <title>MERCADO LOGIC PRO - Sistema Punto de Venta</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
@@ -1546,6 +1555,8 @@ const IRON_LOCK = {
     },
 
     activateLicense(code, deviceId) {
+        let isEmbedded = false;
+
         // 1) Buscar primero en localStorage (licencias del admin local)
         let license = this.findMatchingLicense(code, deviceId);
         if (!license) {
@@ -1555,28 +1566,32 @@ const IRON_LOCK = {
         // 2) Si no está en localStorage, buscar en la base embebida (para clientes en otros dispositivos)
         if (!license) {
             license = EMBEDDED_LICENSES.find(l => l.code === code) || null;
+            if (license) isEmbedded = true;
         }
         // 3) Si la licencia es "universal" (no tiene deviceId asignado), se acepta desde cualquier dispositivo
         if (!license) {
-            // Último intento: buscar cualquier licencia que coincida parcialmente (por si el formato varía)
             const cleanCode = code.replace(/[^A-Z0-9-]/gi, '').toUpperCase();
             const allSources = [...this.getLicenses(), ...EMBEDDED_LICENSES];
             license = allSources.find(l => l.code && l.code.replace(/[^A-Z0-9-]/gi, '').toUpperCase() === cleanCode) || null;
+            if (license && EMBEDDED_LICENSES.find(l => l.code === code)) isEmbedded = true;
         }
         if (!license) return { success: false, message: 'Licencia no encontrada. Verifique el código e intente nuevamente.' };
         if (license.status === 'Revocada') return { success: false, message: 'Esta licencia ha sido revocada por el administrador.' };
-        // Verificar Device ID (excepto si la licencia no tiene deviceId asignado = universal)
-        if (license.deviceId && license.deviceId !== deviceId) {
+
+        // Device ID check: Las licencias EMBEDDED son pre-aprobadas por el admin, NO necesitan verificación de Device ID.
+        // Solo las licencias locales (localStorage) verifican Device ID para seguridad.
+        if (!isEmbedded && license.deviceId && license.deviceId !== deviceId) {
             return { success: false, message: 'Esta licencia está asignada a otro dispositivo. Device ID esperado: ' + license.deviceId };
         }
+
         // Asignar al dispositivo actual y guardar en localStorage (tanto PRO como DEMO)
-        license.deviceId = deviceId;
+        license = {...license, deviceId: deviceId};
         const licenses = this.getLicenses();
         const idx = licenses.findIndex(l => l.code === code);
         if (idx >= 0) {
-            licenses[idx] = {...license, deviceId: deviceId};
+            licenses[idx] = license;
         } else {
-            licenses.push({...license, deviceId: deviceId});
+            licenses.push(license);
         }
         this.saveLicenses(licenses);
         localStorage.setItem(this.ACTIVE_KEY, JSON.stringify(license));
