@@ -780,8 +780,12 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
                     </div>
                     <div class="space-y-4">
                         <div class="flex justify-between items-center p-3 bg-surface-container-lowest rounded-lg">
-                            <span class="text-sm font-medium">Símbolo</span>
-                            <span id="cfgCurrencySymbol" class="font-bold text-primary">$</span>
+                            <span class="text-sm font-medium">Monedas Activas</span>
+                            <div class="flex items-center gap-3">
+                                <span id="cfgCurrencySymbol" class="font-bold text-primary">$</span>
+                                <span class="text-outline">/</span>
+                                <span id="cfgCurrencySymbolBs" class="font-bold text-emerald-600">Bs.</span>
+                            </div>
                         </div>
                         <div class="space-y-2">
                             <label class="text-xs font-bold text-outline uppercase">IVA (%)</label>
@@ -789,6 +793,7 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
                                 <input id="cfgTaxRate" class="w-20 bg-surface-container-lowest border-none focus:ring-2 focus:ring-primary p-2 rounded-lg font-bold text-center" type="number" value="16"/>
                                 <span class="font-bold">%</span>
                             </div>
+                            <p class="text-[10px] text-outline font-medium">Aplica a USD y Bs. automáticamente con la tasa configurada</p>
                         </div>
                         <div class="flex items-center justify-between pt-2">
                             <span class="text-sm font-medium">IVA Incluido en Precio</span>
@@ -1142,13 +1147,14 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
                         <input type="checkbox" id="prodIVA" class="w-4 h-4 accent-primary rounded" onchange="INV.calcPrice()"/>
                         <span class="text-[11px] font-bold text-on-surface">IVA 16% Incluido en el precio</span>
                     </label>
-                    <span id="ivaAmount" class="ml-auto text-[10px] font-bold text-outline tabular-nums hidden">IVA: $0.00</span>
+                    <span id="ivaAmount" class="ml-auto text-[10px] font-bold tabular-nums hidden"><span class="text-on-surface">IVA: $0.00</span></span>
                 </div>
                 <!-- Resumen de ganancia -->
                 <div id="profitSummary" class="grid grid-cols-3 gap-2 hidden">
                     <div class="bg-white rounded-lg p-2.5 text-center border border-outline-variant/20">
                         <p class="text-[9px] font-bold text-outline uppercase">Ganancia</p>
                         <p id="profitAmount" class="text-base font-black text-secondary tabular-nums">$0.00</p>
+                        <p id="profitAmountBs" class="text-[10px] font-bold text-emerald-600 tabular-nums"></p>
                     </div>
                     <div class="bg-white rounded-lg p-2.5 text-center border border-outline-variant/20">
                         <p class="text-[9px] font-bold text-outline uppercase">Margen Real</p>
@@ -2543,7 +2549,8 @@ const INV = {
         if (ivaIncluded && $('ivaAmount')) {
             const price = parseFloat($('prodPrice').value) || 0;
             const iva = price - (price / 1.16);
-            $('ivaAmount').textContent = 'IVA 16%: $' + iva.toFixed(2);
+            const tasa = getTasa();
+            $('ivaAmount').innerHTML = '<span class="text-on-surface">IVA 16%: $' + iva.toFixed(2) + '</span> <span class="text-emerald-600 font-bold ml-2">| Bs. ' + (iva * tasa).toFixed(2) + '</span>';
             $('ivaAmount').classList.remove('hidden');
         } else if ($('ivaAmount')) {
             $('ivaAmount').classList.add('hidden');
@@ -2614,11 +2621,12 @@ const INV = {
             const profit = price - cost;
             const marginPct = ((profit) / price * 100).toFixed(1);
             const markup = (price / cost).toFixed(2);
+            const tasa = getTasa();
             $('profitAmount').textContent = '$ ' + profit.toFixed(2);
+            if ($('profitAmountBs')) $('profitAmountBs').textContent = 'Bs. ' + (profit * tasa).toFixed(2);
             $('realMargin').textContent = marginPct + '%';
             $('markupDisplay').textContent = markup + 'x';
             // Show Bs price
-            const tasa = getTasa();
             if (bsDisplay) {
                 bsDisplay.classList.remove('hidden');
                 bsDisplay.querySelector('p.text-3xl').textContent = 'Bs. ' + (price * tasa).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -2639,12 +2647,13 @@ const INV = {
             const reinv = (profit * 0.50).toFixed(2);
             const gastos = (profit * 0.30).toFixed(2);
             const ganancia = (profit * 0.20).toFixed(2);
+            const tasa = getTasa();
             el.innerHTML = `<div class="space-y-1">
                 <p class="font-bold text-slate-800">Desglose por cada unidad vendida:</p>
-                <div class="flex justify-between"><span class="text-blue-700 font-bold">50% Reinversión:</span><span class="font-black text-blue-800">$ ${reinv}</span></div>
-                <div class="flex justify-between"><span class="text-amber-700 font-bold">30% Gastos Op.:</span><span class="font-black text-amber-800">$ ${gastos}</span></div>
-                <div class="flex justify-between"><span class="text-green-700 font-bold">20% Ganancia Neta:</span><span class="font-black text-green-800">$ ${ganancia}</span></div>
-                <div class="border-t border-slate-200 pt-1 mt-1 flex justify-between"><span class="font-bold">Total Ganancia:</span><span class="font-black">$ ${profit.toFixed(2)}</span></div>
+                <div class="flex justify-between"><span class="text-blue-700 font-bold">50% Reinversión:</span><span class="font-black text-blue-800">$ ${reinv} <span class="text-emerald-600 text-[10px]">| Bs. ${(profit*0.50*tasa).toFixed(2)}</span></span></div>
+                <div class="flex justify-between"><span class="text-amber-700 font-bold">30% Gastos Op.:</span><span class="font-black text-amber-800">$ ${gastos} <span class="text-emerald-600 text-[10px]">| Bs. ${(profit*0.30*tasa).toFixed(2)}</span></span></div>
+                <div class="flex justify-between"><span class="text-green-700 font-bold">20% Ganancia Neta:</span><span class="font-black text-green-800">$ ${ganancia} <span class="text-emerald-600 text-[10px]">| Bs. ${(profit*0.20*tasa).toFixed(2)}</span></span></div>
+                <div class="border-t border-slate-200 pt-1 mt-1 flex justify-between"><span class="font-bold">Total Ganancia:</span><span class="font-black">$ ${profit.toFixed(2)} <span class="text-emerald-600 text-[10px]">| Bs. ${(profit*tasa).toFixed(2)}</span></span></div>
             </div>`;
         } else if (cost > 0) {
             el.innerHTML = `<p class="font-bold text-slate-800">Desglose sugerido con costo $${cost.toFixed(2)}:</p>
