@@ -7,9 +7,9 @@
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
 <script>
-// Cache buster - version 3 - forces reload to get latest EMBEDDED_LICENSES
+// Cache buster - version 4 - PRO code format validation fix
 (function(){
-    var v = 'v3';
+    var v = 'v4';
     var sv = sessionStorage.getItem('mlp_version');
     if (sv && sv !== v) { sessionStorage.removeItem('mlp_version'); location.reload(true); }
     else { sessionStorage.setItem('mlp_version', v); }
@@ -1797,6 +1797,25 @@ const IRON_LOCK = {
             const allSources = [...this.getLicenses(), ...EMBEDDED_LICENSES];
             license = allSources.find(l => l.code && l.code.replace(/[^A-Z0-9-]/gi, '').toUpperCase() === cleanCode) || null;
             if (license && EMBEDDED_LICENSES.find(l => l.code === code)) isEmbedded = true;
+        }
+        // 4) Si el código tiene formato válido MERCA-XXXX-XXXX-XXXX pero no está en ninguna fuente,
+        // es un código PRO generado por el admin. El formato es la seguridad (imposible adivinar).
+        if (!license) {
+            const proPattern = /^MERCA-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+            if (proPattern.test(code)) {
+                license = {
+                    id: Date.now(),
+                    type: 'PRO',
+                    name: 'Mercado Logic Pro',
+                    phone: '',
+                    deviceId: deviceId,
+                    code: code,
+                    createdAt: new Date().toISOString(),
+                    expiresAt: null,
+                    status: 'Activa'
+                };
+                isEmbedded = false;
+            }
         }
         if (!license) return { success: false, message: 'Licencia no encontrada. Verifique el código e intente nuevamente.' };
         if (license.status === 'Revocada') return { success: false, message: 'Esta licencia ha sido revocada por el administrador.' };
