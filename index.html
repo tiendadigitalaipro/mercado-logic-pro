@@ -240,12 +240,41 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
 .theme-swatch { transition: transform 0.2s, box-shadow 0.2s; }
 .theme-swatch:hover { transform: scale(1.1); }
 .theme-swatch.active { box-shadow: 0 0 0 3px white, 0 0 0 5px currentColor; transform: scale(1.1); }
+
+/* Mobile responsive sidebar */
+@media (max-width: 768px) {
+    #sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+    #sidebar.mobile-open { transform: translateX(0); }
+    main.flex-1 { margin-left: 0 !important; }
+    #sidebarOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 49; }
+    #sidebarOverlay.active { display: block; }
+    #mobileMenuBtn { display: flex !important; }
+}
+@media (min-width: 769px) {
+    #mobileMenuBtn { display: none !important; }
+    #sidebarOverlay { display: none !important; }
+}
+
+/* Stock alert badge */
+.stock-low { background: #fef3c7; border-left: 3px solid #f59e0b; }
+.stock-critical { background: #fee2e2; border-left: 3px solid #ef4444; }
+body.dark .stock-low { background: rgba(245,158,11,0.15); }
+body.dark .stock-critical { background: rgba(239,68,68,0.15); }
+
+/* Barcode input focus ring */
+#posSearch:focus { box-shadow: 0 0 0 3px rgba(0,64,161,0.15); }
+
+/* License input auto-format */
+#licenseInput { letter-spacing: 0.15em; }
 </style>
 </head>
 <body class="bg-background text-on-surface font-body overflow-hidden h-screen flex">
 
 <!-- ==================== TOAST CONTAINER ==================== -->
 <div id="toastContainer" class="fixed top-4 right-4 z-[100] space-y-2"></div>
+
+<!-- ==================== MOBILE SIDEBAR OVERLAY ==================== -->
+<div id="sidebarOverlay" onclick="POS.closeSidebar()"></div>
 
 <!-- ==================== IRON LOCK LICENSE SCREEN ==================== -->
 <div id="ironLockScreen" class="fixed inset-0 z-[200] flex items-center justify-center">
@@ -287,6 +316,10 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
             <span class="material-symbols-outlined">analytics</span>
             <span class="font-inter text-sm font-medium">Reportes (F3)</span>
         </a>
+        <a class="nav-item flex items-center gap-3 px-3 py-2 text-slate-700 hover:bg-slate-200 hover:translate-x-1 transition-transform duration-200 rounded-md cursor-pointer" data-view="proveedores" onclick="POS.navigate('proveedores')">
+            <span class="material-symbols-outlined">local_shipping</span>
+            <span class="font-inter text-sm font-medium">Proveedores (F5)</span>
+        </a>
         <a class="nav-item flex items-center gap-3 px-3 py-2 text-slate-700 hover:bg-slate-200 hover:translate-x-1 transition-transform duration-200 rounded-md cursor-pointer" data-view="configuracion" onclick="POS.navigate('configuracion')">
             <span class="material-symbols-outlined">settings</span>
             <span class="font-inter text-sm font-medium">Configuración (F4)</span>
@@ -318,6 +351,10 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
     <!-- ==================== HEADER ==================== -->
     <header class="flex justify-between items-center w-full px-6 py-2 bg-slate-50 z-40 shrink-0">
         <div class="flex items-center gap-6">
+            <!-- Mobile hamburger button -->
+            <button id="mobileMenuBtn" onclick="POS.toggleSidebar()" class="p-2 hover:bg-slate-200/50 transition-colors rounded-lg" style="display:none" title="Menú">
+                <span class="material-symbols-outlined text-slate-600">menu</span>
+            </button>
             <div class="flex items-center gap-3">
                 <img src="logo.jpg" class="w-8 h-8 rounded-lg object-cover" alt="Logo" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div class=\'w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-black text-xs\'>A2K</div>')"/>
                 <h1 class="text-xl font-black text-blue-800 uppercase italic font-headline tracking-tight">MERCADO LOGIC PRO</h1>
@@ -930,6 +967,74 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
         </div>
     </section>
 
+    <!-- ==================== VIEW: PROVEEDORES (F5) ==================== -->
+    <section id="view-proveedores" class="view-section flex-1 overflow-hidden">
+        <div class="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1 class="text-4xl font-black font-headline text-on-surface tracking-tight uppercase">Proveedores</h1>
+                    <p class="text-on-surface-variant font-medium">Gestione sus proveedores y compras</p>
+                </div>
+                <button onclick="PROV.openModal()" class="bg-secondary text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg hover:brightness-110 active:scale-95 transition-all">
+                    <span class="material-symbols-outlined">add</span>
+                    NUEVO PROVEEDOR
+                </button>
+            </div>
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-primary-container text-on-primary-container p-4 rounded-xl shadow-sm relative overflow-hidden">
+                    <p class="text-[10px] font-bold uppercase tracking-widest opacity-80">Proveedores</p>
+                    <p id="provStatCount" class="text-3xl font-black font-headline">0</p>
+                    <span class="material-symbols-outlined absolute -right-2 -bottom-2 text-6xl opacity-10">storefront</span>
+                </div>
+                <div class="bg-surface-container-lowest border border-outline-variant/20 p-4 rounded-xl shadow-sm relative overflow-hidden">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-outline">Deuda Total</p>
+                    <p id="provStatDebt" class="text-2xl font-black font-headline text-tertiary tabular-nums">$0.00</p>
+                    <p id="provStatDebtBs" class="text-[10px] font-bold text-emerald-600 tabular-nums"></p>
+                    <span class="material-symbols-outlined absolute -right-2 -bottom-2 text-6xl opacity-10 text-tertiary">account_balance</span>
+                </div>
+                <div class="bg-surface-container-lowest border border-outline-variant/20 p-4 rounded-xl shadow-sm relative overflow-hidden">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-outline">Compras del Mes</p>
+                    <p id="provStatMonthly" class="text-2xl font-black font-headline tabular-nums">$0.00</p>
+                    <span class="material-symbols-outlined absolute -right-2 -bottom-2 text-6xl opacity-10 text-primary">local_shipping</span>
+                </div>
+                <div class="bg-secondary-container/30 border border-secondary/20 p-4 rounded-xl shadow-sm relative overflow-hidden">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-secondary">Al Día</p>
+                    <p id="provStatOk" class="text-3xl font-black font-headline text-secondary">0</p>
+                    <span class="material-symbols-outlined absolute -right-2 -bottom-2 text-6xl opacity-10 text-secondary">check_circle</span>
+                </div>
+            </div>
+            <!-- Provider List -->
+            <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/20">
+                <div class="grid grid-cols-12 bg-surface-container-high py-3 px-6 text-[10px] font-black uppercase tracking-widest text-outline">
+                    <div class="col-span-3">Proveedor</div>
+                    <div class="col-span-2">Teléfono</div>
+                    <div class="col-span-2">Categoría</div>
+                    <div class="col-span-2 text-right">Deuda</div>
+                    <div class="col-span-2 text-right">Última compra</div>
+                    <div class="col-span-1 text-center">Acc.</div>
+                </div>
+                <div id="provTableBody" class="divide-y divide-outline-variant/10">
+                    <div class="px-6 py-8 text-center text-outline">
+                        <span class="material-symbols-outlined text-4xl block mb-2">local_shipping</span>
+                        No hay proveedores registrados. Agregue su primer proveedor.
+                    </div>
+                </div>
+            </div>
+            <!-- Purchase History -->
+            <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden border border-outline-variant/20">
+                <div class="px-6 py-4 border-b border-outline-variant/20 flex items-center justify-between">
+                    <h3 class="font-bold text-sm uppercase text-on-surface-variant flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">receipt_long</span> Historial de Compras
+                    </h3>
+                </div>
+                <div id="provPurchaseHistory" class="max-h-64 overflow-y-auto divide-y divide-outline-variant/10">
+                    <div class="px-6 py-4 text-center text-outline text-sm">Sin compras registradas</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
 </main>
 
 <!-- ==================== MODALS ==================== -->
@@ -1380,6 +1485,98 @@ body.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </div>
 </div>
 
+<!-- Modal Proveedor -->
+<div id="modalProveedor" class="modal-overlay fixed inset-0 bg-black/50 z-[80] items-center justify-center" onclick="if(event.target===this)POS.closeModal('modalProveedor')">
+    <div class="bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+        <div class="bg-primary p-6 text-white flex justify-between items-start">
+            <div>
+                <h3 id="provModalTitle" class="font-headline font-black text-2xl uppercase">Nuevo Proveedor</h3>
+                <p class="text-sm opacity-80 mt-1">Complete los datos del proveedor</p>
+            </div>
+            <button onclick="POS.closeModal('modalProveedor')" class="p-2 hover:bg-white/20 rounded-lg transition-colors"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <input type="hidden" id="provEditId"/>
+        <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2 space-y-1">
+                    <label class="text-xs font-bold text-outline uppercase">Nombre del Proveedor *</label>
+                    <input id="provName" type="text" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg font-medium" placeholder="Ej: Distribuidora García"/>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-outline uppercase">Teléfono</label>
+                    <input id="provPhone" type="tel" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg" placeholder="+58 412..."/>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-outline uppercase">Categoría</label>
+                    <select id="provCategory" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg">
+                        <option>Lácteos</option><option>Abarrotes</option><option>Bebidas</option>
+                        <option>Frutas y Verduras</option><option>Carnes</option><option>Limpieza</option>
+                        <option>Panadería</option><option>General</option>
+                    </select>
+                </div>
+                <div class="col-span-2 space-y-1">
+                    <label class="text-xs font-bold text-outline uppercase">Dirección / Contacto</label>
+                    <input id="provAddress" type="text" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg" placeholder="Dirección o datos de contacto"/>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-outline uppercase">Deuda Actual ($)</label>
+                    <input id="provDebt" type="number" step="0.01" min="0" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg tabular-nums" placeholder="0.00"/>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-outline uppercase">Días de Crédito</label>
+                    <input id="provCreditDays" type="number" min="0" max="90" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg" placeholder="30"/>
+                </div>
+                <div class="col-span-2 space-y-1">
+                    <label class="text-xs font-bold text-outline uppercase">Notas</label>
+                    <textarea id="provNotes" rows="2" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg text-sm resize-none" placeholder="Observaciones..."></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 border-t border-outline-variant/20 flex gap-3">
+            <button onclick="POS.closeModal('modalProveedor')" class="flex-1 py-3 rounded-xl border border-outline font-bold text-sm hover:bg-surface-container-high transition-all uppercase">Cancelar</button>
+            <button onclick="PROV.save()" class="flex-1 py-3 rounded-xl bg-secondary text-white font-black text-sm hover:brightness-110 shadow-lg transition-all active:scale-95 uppercase">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Registro Compra -->
+<div id="modalCompra" class="modal-overlay fixed inset-0 bg-black/50 z-[80] items-center justify-center" onclick="if(event.target===this)POS.closeModal('modalCompra')">
+    <div class="bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+        <div class="bg-secondary p-6 text-white">
+            <h3 class="font-headline font-black text-2xl uppercase">Registrar Compra</h3>
+            <p id="compraProvName" class="text-sm opacity-80 mt-1">Proveedor</p>
+        </div>
+        <input type="hidden" id="compraProvId"/>
+        <div class="p-6 space-y-4">
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-outline uppercase">Monto de la Compra ($)</label>
+                <input id="compraAmount" type="number" step="0.01" min="0" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg tabular-nums text-lg font-bold" placeholder="0.00"/>
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-bold text-outline uppercase">Descripción</label>
+                <input id="compraDesc" type="text" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg" placeholder="Ej: Compra de lácteos semana 1"/>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-outline uppercase">¿Pagado?</label>
+                    <select id="compraPaid" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg">
+                        <option value="0">A crédito (agrega deuda)</option>
+                        <option value="1">Pagado al contado</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-outline uppercase">Fecha</label>
+                    <input id="compraDate" type="date" class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary p-3 rounded-lg"/>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 border-t border-outline-variant/20 flex gap-3">
+            <button onclick="POS.closeModal('modalCompra')" class="flex-1 py-3 rounded-xl border border-outline font-bold text-sm hover:bg-surface-container-high transition-all uppercase">Cancelar</button>
+            <button onclick="PROV.saveCompra()" class="flex-1 py-3 rounded-xl bg-secondary text-white font-black text-sm hover:brightness-110 shadow-lg transition-all active:scale-95 uppercase">Registrar</button>
+        </div>
+    </div>
+</div>
+
 <!-- ==================== JAVASCRIPT ==================== -->
 <script>
 // ======================== HELPERS ========================
@@ -1474,12 +1671,34 @@ const EMBEDDED_LICENSES = [
     {
         id: 1743801600000,
         type: "DEMO",
-        name: "BODEGA DE TODITO",
+        name: "DEMO UNIVERSAL",
         phone: "",
-        deviceId: "MERCA-2864-D55F-1511",
+        deviceId: "",
         code: "MERCA-CWCJ-JH77-KTXX",
         createdAt: "2026-04-05T00:00:00.000Z",
-        expiresAt: "2026-04-10T23:59:59.000Z",
+        expiresAt: "2026-12-31T23:59:59.000Z",
+        status: "Activa"
+    },
+    {
+        id: 1743801600001,
+        type: "DEMO",
+        name: "DEMO MERCADO LOGIC",
+        phone: "",
+        deviceId: "",
+        code: "MERCA-DEMO-2026-FREE",
+        createdAt: "2026-04-05T00:00:00.000Z",
+        expiresAt: "2026-12-31T23:59:59.000Z",
+        status: "Activa"
+    },
+    {
+        id: 1743801600002,
+        type: "DEMO",
+        name: "PRUEBA GRATUITA",
+        phone: "",
+        deviceId: "",
+        code: "MERCA-PRBA-GRA1-2026",
+        createdAt: "2026-04-05T00:00:00.000Z",
+        expiresAt: "2026-12-31T23:59:59.000Z",
         status: "Activa"
     }
 ];
@@ -1674,9 +1893,10 @@ const LICENSE_UI = {
                         <span class="material-symbols-outlined">verified</span>
                         ACTIVAR LICENCIA
                     </button>
-                    <div class="text-center pt-2">
-                        <p class="text-white/50 text-xs">&iquest;No tiene licencia?</p>
-                        <a href="admin-licencias.html" class="text-secondary font-bold text-sm hover:underline">Solicitar prueba gratuita &rarr;</a>
+                    <div class="text-center pt-2 space-y-2">
+                        <p class="text-white/50 text-xs">Código de prueba gratuita: <code class="text-secondary font-bold cursor-pointer hover:underline" onclick="$('licenseInput').value='MERCA-DEMO-2026-FREE'">MERCA-DEMO-2026-FREE</code></p>
+                        <p class="text-white/50 text-xs">&iquest;Necesita licencia PRO?</p>
+                        <a href="admin-licencias.html" class="text-secondary font-bold text-sm hover:underline">Generar licencia &rarr;</a>
                     </div>
                 </div>
             </div>
@@ -1803,8 +2023,15 @@ const LICENSE_UI = {
         if (!code) { $('licenseInput').style.borderColor = '#ff6b6b'; return; }
         const result = IRON_LOCK.activateLicense(code, this.deviceId);
         if (result.success) {
+            const lic = result.license;
             toast('✅ Licencia activada correctamente', 'success');
-            setTimeout(() => location.reload(), 800);
+            // En lugar de recargar (que confunde al usuario), mostrar pantalla correcta directamente
+            if (lic.type === 'DEMO') {
+                const validation = IRON_LOCK.validateLicense(lic, this.deviceId);
+                setTimeout(() => this.showDemoScreen(lic, validation.daysLeft || 5), 400);
+            } else {
+                setTimeout(() => this.showProScreen(lic), 400);
+            }
         } else {
             toast('❌ ' + result.message, 'error');
             $('licenseInput').style.borderColor = '#ff6b6b';
@@ -1816,8 +2043,14 @@ const LICENSE_UI = {
         if (!code) return;
         const result = IRON_LOCK.activateLicense(code, this.deviceId);
         if (result.success) {
-            toast('✅ Licencia PRO activada', 'success');
-            setTimeout(() => location.reload(), 800);
+            const lic = result.license;
+            toast('✅ Licencia activada correctamente', 'success');
+            if (lic.type === 'DEMO') {
+                const validation = IRON_LOCK.validateLicense(lic, this.deviceId);
+                setTimeout(() => this.showDemoScreen(lic, validation.daysLeft || 5), 400);
+            } else {
+                setTimeout(() => this.showProScreen(lic), 400);
+            }
         } else {
             toast('❌ ' + result.message, 'error');
         }
@@ -1904,6 +2137,8 @@ const DB = {
             {id:2, name:'Juan Pérez', role:'Cajero', pin:'0000', active:true}
         ],
         sales: [],
+        proveedores: [],
+        compras: [],
         box: { isOpen: true, openTime: new Date().toISOString(), closeTime: null, openAmount: 5000 },
         folioCounter: 29400
     },
@@ -1960,6 +2195,7 @@ function navigateTo(view) {
     if (view === 'inventario') INV.render();
     if (view === 'reportes') RPT.render();
     if (view === 'configuracion') CFG.load();
+    if (view === 'proveedores') PROV.render();
 }
 
 // ======================== POS MODULE ========================
@@ -1975,7 +2211,26 @@ const POS = {
         this.updateNotifBadge();
     },
 
-    navigate(view) { navigateTo(view); if(view==='ventas') setTimeout(()=>$('posSearch').focus(), 100); },
+    navigate(view) {
+        navigateTo(view);
+        if (view === 'ventas') setTimeout(() => $('posSearch').focus(), 100);
+        // Cerrar sidebar en mobile al navegar
+        this.closeSidebar();
+    },
+
+    toggleSidebar() {
+        const sidebar = $('sidebar');
+        const overlay = $('sidebarOverlay');
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+    },
+
+    closeSidebar() {
+        const sidebar = $('sidebar');
+        const overlay = $('sidebarOverlay');
+        if (sidebar) sidebar.classList.remove('mobile-open');
+        if (overlay) overlay.classList.remove('active');
+    },
 
     newSale() {
         if (this.cart.length > 0) {
@@ -2622,7 +2877,9 @@ const INV = {
             ? '<tr><td colspan="7" class="px-4 py-8 text-center text-outline">No se encontraron productos</td></tr>'
             : page.map(p => {
                 const isLow = p.stock <= p.minStock;
-                return `<tr class="hover:bg-surface-container-highest transition-colors group">
+                const isCritical = p.stock === 0;
+                const rowClass = isCritical ? 'stock-critical' : isLow ? 'stock-low' : '';
+                return `<tr class="hover:bg-surface-container-highest transition-colors group ${rowClass}">
                     <td class="px-4 py-3 text-xs font-mono text-outline">${p.code}</td>
                     <td class="px-4 py-3">
                         <div class="flex flex-col">
@@ -3018,37 +3275,60 @@ const RPT = {
         this.render();
         toast('Caja cerrada correctamente');
 
-        // Print close report
+        // Print close report with full payment breakdown
+        const config = DB.get('config');
         const sales = DB.get('sales');
         const today = new Date().toISOString().split('T')[0];
         const todaySales = sales.filter(s => s.date.startsWith(today));
         const total = todaySales.reduce((s, sale) => s + sale.total, 0);
         const cash = todaySales.filter(s => s.method === 'Efectivo').reduce((s, sale) => s + sale.total, 0);
-        const card = todaySales.filter(s => s.method !== 'Efectivo').reduce((s, sale) => s + sale.total, 0);
+        const card = todaySales.filter(s => s.method === 'Tarjeta').reduce((s, sale) => s + sale.total, 0);
+        const qr = todaySales.filter(s => s.method === 'QR').reduce((s, sale) => s + sale.total, 0);
+        const tasa = config.tasaCambio || 50;
+
+        // 50/30/20 formula
+        const reinversion = total * 0.50;
+        const gastos = total * 0.30;
+        const ganancia = total * 0.20;
+
+        // Payment by method summary
+        const methodMap = {};
+        todaySales.forEach(s => { methodMap[s.method] = (methodMap[s.method] || 0) + s.total; });
+        const methodLines = Object.entries(methodMap).map(([m, v]) => `  ${(m||'Otro').padEnd(12)}: $${v.toFixed(2)} | Bs. ${(v*tasa).toFixed(2)}`).join('\n');
 
         const report = `
-REPORTE DE CIERRE DE CAJA
-==========================
-Fecha: ${new Date().toLocaleDateString('es-MX')}
+╔══════════════════════════════════════╗
+║      MERCADO LOGIC PRO — A2K         ║
+║        CIERRE DE CAJA                ║
+╚══════════════════════════════════════╝
+Negocio    : ${config.name || 'Mi Negocio'}
+Fecha      : ${new Date().toLocaleDateString('es-MX', {weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+Hora cierre: ${new Date().toLocaleTimeString('es-MX')}
 Transacciones: ${todaySales.length}
+Tasa cambio: Bs. ${tasa.toFixed(2)} / $1
 
-TOTAL BRUTO:
-  USD: ${formatMoney(total)}
-  Bs:  ${formatBs(total)}
+════════════ VENTAS TOTALES ════════════
+  USD : ${formatMoney(total).padStart(12)}
+  Bs  : Bs. ${(total * tasa).toFixed(2).padStart(10)}
 
-EFECTIVO:
-  USD: ${formatMoney(cash)}
-  Bs:  ${formatBs(cash)}
+══════════ MÉTODOS DE PAGO ═════════════
+${methodLines || '  Sin ventas'}
 
-TARJETA/QR:
-  USD: ${formatMoney(card)}
-  Bs:  ${formatBs(card)}
-==========================
-        `;
-        const w = window.open('', '_blank', 'width=400,height=400');
-        w.document.write(`<html><head><title>Cierre de Caja</title><style>body{font-family:monospace;font-size:14px;white-space:pre;padding:20px;}</style></head><body>${report}</body></html>`);
-        w.document.close();
-        w.print();
+════════════ FÓRMULA 50/30/20 ══════════
+  50% Reinversión: $${reinversion.toFixed(2)} | Bs. ${(reinversion*tasa).toFixed(2)}
+  30% Gastos     : $${gastos.toFixed(2)} | Bs. ${(gastos*tasa).toFixed(2)}
+  20% Ganancia   : $${ganancia.toFixed(2)} | Bs. ${(ganancia*tasa).toFixed(2)}
+
+════════════════════════════════════════
+  MERCADO LOGIC PRO v1.0 — A2K Studio
+════════════════════════════════════════
+        `.trim();
+        const w = window.open('', '_blank', 'width=500,height=600');
+        if (w) {
+            w.document.write(`<html><head><title>Cierre de Caja</title><style>body{font-family:monospace;font-size:14px;white-space:pre;padding:20px;background:#fff;color:#000;}</style></head><body>${report}</body></html>`);
+            w.document.close();
+            w.print();
+        }
     },
 
     printReport() {
@@ -3200,9 +3480,10 @@ document.addEventListener('keydown', function(e) {
     else if (e.key === 'F2' && !isInput) { e.preventDefault(); navigateTo('inventario'); }
     else if (e.key === 'F3' && !isInput) { e.preventDefault(); navigateTo('reportes'); }
     else if (e.key === 'F4' && !isInput) { e.preventDefault(); navigateTo('configuracion'); }
-    else if (e.key === 'F5') { e.preventDefault(); toast('Cajón abierto', 'info'); }
-    else if (e.key === 'F6' && !isInput) { e.preventDefault(); POS.showPendingSales(); }
-    else if (e.key === 'F7' && !isInput) { e.preventDefault(); POS.showCustomerSearch(); }
+    else if (e.key === 'F5' && !isInput) { e.preventDefault(); navigateTo('proveedores'); }
+    else if (e.key === 'F6' && !isInput) { e.preventDefault(); navigateTo('configuracion'); }
+    else if (e.key === 'F7' && !isInput) { e.preventDefault(); POS.showPendingSales(); }
+    else if (e.key === 'F8' && !isInput) { e.preventDefault(); POS.showCustomerSearch(); }
     else if (e.key === 'F8') { e.preventDefault(); POS.toggleCalcPanel(); }
     else if (e.key === 'F9') { e.preventDefault(); POS.openDiscountModal(); }
     else if (e.key === 'F10') { e.preventDefault(); POS.cancelSale(); }
@@ -3222,6 +3503,168 @@ document.addEventListener('click', function(e) {
         $('searchDropdown').classList.remove('active');
     }
 });
+
+// ======================== PROVEEDORES MODULE ========================
+const PROV = {
+    render() {
+        const proveedores = DB.get('proveedores') || [];
+        const compras = DB.get('compras') || [];
+        const config = DB.get('config');
+        const tasa = config.tasaCambio || 50;
+
+        // Stats
+        const totalDebt = proveedores.reduce((s, p) => s + (p.debt || 0), 0);
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const monthlyCompras = compras.filter(c => c.date >= monthStart).reduce((s, c) => s + (c.amount || 0), 0);
+        const okCount = proveedores.filter(p => (p.debt || 0) === 0).length;
+
+        if ($('provStatCount')) $('provStatCount').textContent = proveedores.length;
+        if ($('provStatDebt')) $('provStatDebt').textContent = formatMoney(totalDebt);
+        if ($('provStatDebtBs')) $('provStatDebtBs').textContent = formatBs(totalDebt);
+        if ($('provStatMonthly')) $('provStatMonthly').textContent = formatMoney(monthlyCompras);
+        if ($('provStatOk')) $('provStatOk').textContent = okCount;
+
+        // Table
+        const tbody = $('provTableBody');
+        if (tbody) {
+            tbody.innerHTML = proveedores.length === 0
+                ? '<div class="px-6 py-8 text-center text-outline"><span class="material-symbols-outlined text-4xl block mb-2">local_shipping</span>No hay proveedores registrados. Agregue su primer proveedor.</div>'
+                : proveedores.map(p => {
+                    const lastCompra = compras.filter(c => c.provId === p.id).sort((a,b) => b.date.localeCompare(a.date))[0];
+                    const debtClass = (p.debt || 0) > 0 ? 'text-tertiary font-black' : 'text-secondary font-bold';
+                    return `<div class="grid grid-cols-12 px-6 py-4 hover:bg-surface-container-highest transition-colors items-center">
+                        <div class="col-span-3">
+                            <p class="font-bold text-sm text-on-surface">${p.name}</p>
+                            <p class="text-[10px] text-outline">${p.phone || 'Sin teléfono'}</p>
+                        </div>
+                        <div class="col-span-2 text-sm text-on-surface-variant">${p.phone || '—'}</div>
+                        <div class="col-span-2"><span class="text-[10px] font-bold px-2 py-1 bg-surface-container-low rounded-full uppercase">${p.category || 'General'}</span></div>
+                        <div class="col-span-2 text-right">
+                            <p class="text-sm ${debtClass} tabular-nums">${formatMoney(p.debt || 0)}</p>
+                            <p class="text-[10px] text-emerald-600 tabular-nums">${formatBs(p.debt || 0)}</p>
+                        </div>
+                        <div class="col-span-2 text-right text-xs text-on-surface-variant tabular-nums">${lastCompra ? new Date(lastCompra.date).toLocaleDateString('es-MX') : 'Sin compras'}</div>
+                        <div class="col-span-1 flex items-center justify-center gap-1">
+                            <button onclick="PROV.openCompraModal(${p.id})" class="p-1.5 hover:bg-secondary-fixed rounded transition-colors text-secondary" title="Registrar compra"><span class="material-symbols-outlined text-sm">add_shopping_cart</span></button>
+                            <button onclick="PROV.openModal(${p.id})" class="p-1.5 hover:bg-primary-fixed rounded transition-colors text-primary" title="Editar"><span class="material-symbols-outlined text-sm">edit</span></button>
+                            <button onclick="PROV.delete(${p.id})" class="p-1.5 hover:bg-tertiary-fixed rounded transition-colors text-tertiary" title="Eliminar"><span class="material-symbols-outlined text-sm">delete</span></button>
+                        </div>
+                    </div>`;
+                }).join('');
+        }
+
+        // Purchase history
+        const histEl = $('provPurchaseHistory');
+        if (histEl) {
+            const sorted = [...compras].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 30);
+            histEl.innerHTML = sorted.length === 0
+                ? '<div class="px-6 py-4 text-center text-outline text-sm">Sin compras registradas</div>'
+                : sorted.map(c => {
+                    const prov = proveedores.find(p => p.id === c.provId);
+                    return `<div class="px-6 py-3 flex items-center justify-between hover:bg-surface-container-highest transition-colors">
+                        <div>
+                            <p class="text-sm font-bold">${prov ? prov.name : 'Proveedor'}</p>
+                            <p class="text-xs text-on-surface-variant">${c.desc || 'Compra'} &bull; ${new Date(c.date).toLocaleDateString('es-MX')}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-black tabular-nums ${c.paid ? 'text-secondary' : 'text-tertiary'}">${formatMoney(c.amount)}</p>
+                            <p class="text-[10px] ${c.paid ? 'text-secondary' : 'text-tertiary'} font-bold">${c.paid ? 'Pagado' : 'A crédito'}</p>
+                        </div>
+                    </div>`;
+                }).join('');
+        }
+    },
+
+    openModal(id) {
+        const proveedores = DB.get('proveedores') || [];
+        const p = id ? proveedores.find(pr => pr.id === id) : null;
+        if ($('provModalTitle')) $('provModalTitle').textContent = p ? 'Editar Proveedor' : 'Nuevo Proveedor';
+        if ($('provEditId')) $('provEditId').value = p ? p.id : '';
+        if ($('provName')) $('provName').value = p ? p.name : '';
+        if ($('provPhone')) $('provPhone').value = p ? (p.phone || '') : '';
+        if ($('provCategory')) $('provCategory').value = p ? (p.category || 'General') : 'General';
+        if ($('provAddress')) $('provAddress').value = p ? (p.address || '') : '';
+        if ($('provDebt')) $('provDebt').value = p ? (p.debt || 0) : '';
+        if ($('provCreditDays')) $('provCreditDays').value = p ? (p.creditDays || 30) : '30';
+        if ($('provNotes')) $('provNotes').value = p ? (p.notes || '') : '';
+        $('modalProveedor').classList.add('active');
+    },
+
+    save() {
+        const name = $('provName').value.trim();
+        if (!name) { toast('El nombre del proveedor es obligatorio', 'error'); return; }
+        const proveedores = DB.get('proveedores') || [];
+        const editId = parseInt($('provEditId').value);
+        const data = {
+            name,
+            phone: $('provPhone').value.trim(),
+            category: $('provCategory').value,
+            address: $('provAddress').value.trim(),
+            debt: parseFloat($('provDebt').value) || 0,
+            creditDays: parseInt($('provCreditDays').value) || 30,
+            notes: $('provNotes').value.trim()
+        };
+        if (editId) {
+            const idx = proveedores.findIndex(p => p.id === editId);
+            if (idx >= 0) Object.assign(proveedores[idx], data);
+            toast('Proveedor actualizado');
+        } else {
+            data.id = generateId(proveedores);
+            proveedores.push(data);
+            toast('Proveedor agregado');
+        }
+        DB.set('proveedores', proveedores);
+        POS.closeModal('modalProveedor');
+        this.render();
+    },
+
+    openCompraModal(provId) {
+        const proveedores = DB.get('proveedores') || [];
+        const p = proveedores.find(pr => pr.id === provId);
+        if (!p) return;
+        if ($('compraProvId')) $('compraProvId').value = provId;
+        if ($('compraProvName')) $('compraProvName').textContent = p.name;
+        if ($('compraAmount')) $('compraAmount').value = '';
+        if ($('compraDesc')) $('compraDesc').value = '';
+        if ($('compraPaid')) $('compraPaid').value = '0';
+        if ($('compraDate')) $('compraDate').value = new Date().toISOString().split('T')[0];
+        $('modalCompra').classList.add('active');
+    },
+
+    saveCompra() {
+        const provId = parseInt($('compraProvId').value);
+        const amount = parseFloat($('compraAmount').value);
+        if (!amount || amount <= 0) { toast('Ingrese un monto válido', 'error'); return; }
+        const paid = $('compraPaid').value === '1';
+        const desc = $('compraDesc').value.trim();
+        const date = $('compraDate').value;
+
+        // Save compra record
+        const compras = DB.get('compras') || [];
+        compras.push({ id: generateId(compras), provId, amount, paid, desc, date: date || new Date().toISOString().split('T')[0] });
+        DB.set('compras', compras);
+
+        // Update proveedor debt if credit
+        if (!paid) {
+            const proveedores = DB.get('proveedores') || [];
+            const prov = proveedores.find(p => p.id === provId);
+            if (prov) { prov.debt = (prov.debt || 0) + amount; DB.set('proveedores', proveedores); }
+        }
+        POS.closeModal('modalCompra');
+        toast(paid ? 'Compra pagada registrada' : 'Compra a crédito registrada (deuda actualizada)');
+        this.render();
+    },
+
+    delete(id) {
+        if (!confirm('¿Eliminar este proveedor?')) return;
+        let proveedores = DB.get('proveedores') || [];
+        proveedores = proveedores.filter(p => p.id !== id);
+        DB.set('proveedores', proveedores);
+        toast('Proveedor eliminado');
+        this.render();
+    }
+};
 
 // ======================== INIT ========================
 document.addEventListener('DOMContentLoaded', function() {
