@@ -1535,8 +1535,12 @@ const IRON_LOCK = {
     validateLicense(license, deviceId) {
         if (!license) return { valid: false, reason: 'Sin licencia' };
         if (!license.code || !license.code.startsWith('MERCA-')) return { valid: false, reason: 'Formato de licencia inválido' };
-        if (license.deviceId && license.deviceId !== deviceId) return { valid: false, reason: 'Licencia no corresponde a este dispositivo' };
         if (license.status === 'Revocada') return { valid: false, reason: 'Licencia revocada por administrador' };
+        // Si es licencia EMBEDDED (pre-aprobada por admin), NO verificar Device ID
+        var isEmbedded = EMBEDDED_LICENSES.some(function(l) { return l.code === license.code; });
+        if (!isEmbedded && license.deviceId && license.deviceId !== deviceId) {
+            return { valid: false, reason: 'Licencia no corresponde a este dispositivo' };
+        }
         if (license.type === 'PRO') return { valid: true, license };
         if (license.type === 'DEMO') {
             const now = new Date();
