@@ -2527,8 +2527,8 @@ const POS = {
         const cashReceived = this.paymentMethod === 'Efectivo' ? parseFloat($('cashReceived').value) || 0 : total;
 
         // Save sale
-        const sales = DB.get('sales');
-        let folio = DB.get('folioCounter');
+        const sales = DB.get('sales') || [];
+        let folio = DB.get('folioCounter') || 0;
         folio++;
         DB.set('folioCounter', folio);
 
@@ -2546,7 +2546,7 @@ const POS = {
         DB.set('sales', sales);
 
         // Update stock
-        const products = DB.get('products');
+        const products = DB.get('products') || [];
         this.cart.forEach(item => {
             const prod = products.find(p => p.id === item.productId);
             if (prod) prod.stock = Math.max(0, prod.stock - item.qty);
@@ -3209,9 +3209,9 @@ const INV = {
 // ======================== REPORTS MODULE ========================
 const RPT = {
     render() {
-        const config = DB.get('config');
-        const sales = DB.get('sales');
-        const box = DB.get('box');
+        const config = DB.get('config') || {};
+        const sales = DB.get('sales') || [];
+        const box = DB.get('box') || {};
         const today = new Date().toISOString().split('T')[0];
         const todaySales = sales.filter(s => s.date.startsWith(today));
 
@@ -3295,8 +3295,8 @@ const RPT = {
         toast('Caja cerrada correctamente');
 
         // Print close report with full payment breakdown
-        const config = DB.get('config');
-        const sales = DB.get('sales');
+        const config = DB.get('config') || {};
+        const sales = DB.get('sales') || [];
         const today = new Date().toISOString().split('T')[0];
         const todaySales = sales.filter(s => s.date.startsWith(today));
         const total = todaySales.reduce((s, sale) => s + sale.total, 0);
