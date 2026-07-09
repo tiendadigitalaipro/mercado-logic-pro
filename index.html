@@ -2281,6 +2281,26 @@ function generateLicenseCode() {
     ).join('-');
 }
 
+// ===== RESPALDO CENTRAL: A2K License Engine (Cloudflare Workers) =====
+// Solo se consulta cuando el candado local (arriba) NO reconoce el código.
+// No reemplaza ni modifica la lógica local existente — es un fallback aditivo.
+var A2K_ENGINE_URL = 'https://a2k-license-engine.shoppingelectronics3112.workers.dev';
+async function verificarCodigoCentral(code) {
+  try {
+    var r = await fetch(A2K_ENGINE_URL + '/validar?key=' + encodeURIComponent(code) + '&product=mercado');
+    var d = await r.json();
+    if (d && d.valid) {
+      var venceEn = null;
+      if (d.type === 'demo' && d.daysLeft != null) {
+        var v = new Date(); v.setDate(v.getDate() + d.daysLeft); v.setHours(23,59,59,999);
+        venceEn = v.toISOString();
+      }
+      return { valid: true, tipo: d.type === 'demo' ? 'DEMO' : 'PRO', venceEn: venceEn };
+    }
+  } catch (e) { /* sin internet u motor no disponible — no bloquea, cae a inválido */ }
+  return { valid: false };
+}
+
 const IRON_LOCK = {
     STORAGE_KEY: 'mercado_licenses',
     ACTIVE_KEY: 'mercado_active_license',
@@ -2345,7 +2365,7 @@ const IRON_LOCK = {
                licenses.find(l => l.code === code) || null;
     },
 
-    activateLicense(code, deviceId) {
+    async activateLicense(code, deviceId) {
         let isEmbedded = false;
 
         // 1) Buscar primero en localStorage (licencias del admin local)
@@ -2365,6 +2385,25 @@ const IRON_LOCK = {
             const allSources = [...this.getLicenses(), ...EMBEDDED_LICENSES];
             license = allSources.find(l => l.code && l.code.replace(/[^A-Z0-9-]/gi, '').toUpperCase() === cleanCode) || null;
             if (license && EMBEDDED_LICENSES.find(l => l.code === code)) isEmbedded = true;
+        }
+        // 4) Último intento: si el candado local no reconoce el código, consultar el motor central
+        // A2K License Engine (respaldo aditivo, no reemplaza la lógica local existente)
+        if (!license) {
+            const central = await verificarCodigoCentral(code);
+            if (central.valid) {
+                license = {
+                    id: Date.now(),
+                    type: central.tipo,
+                    name: '',
+                    phone: '',
+                    deviceId: '',
+                    code: code,
+                    createdAt: new Date().toISOString(),
+                    expiresAt: central.venceEn,
+                    status: 'Activa'
+                };
+                isEmbedded = true;
+            }
         }
         if (!license) return { success: false, message: 'Licencia no encontrada. Verifique el código e intente nuevamente.' };
         if (license.status === 'Revocada') return { success: false, message: 'Esta licencia ha sido revocada por el administrador.' };
@@ -2586,10 +2625,10 @@ const LICENSE_UI = {
         `;
     },
 
-    activate() {
+    async activate() {
         const code = $('licenseInput').value.trim().toUpperCase();
         if (!code) { $('licenseInput').style.borderColor = '#ff6b6b'; return; }
-        const result = IRON_LOCK.activateLicense(code, this.deviceId);
+        const result = await IRON_LOCK.activateLicense(code, this.deviceId);
         if (result.success) {
             const lic = result.license;
             toast('✅ Licencia activada correctamente', 'success');
@@ -2606,10 +2645,10 @@ const LICENSE_UI = {
         }
     },
 
-    activateFromExpired() {
+    async activateFromExpired() {
         const code = $('expiredLicenseInput').value.trim().toUpperCase();
         if (!code) return;
-        const result = IRON_LOCK.activateLicense(code, this.deviceId);
+        const result = await IRON_LOCK.activateLicense(code, this.deviceId);
         if (result.success) {
             const lic = result.license;
             toast('✅ Licencia activada correctamente', 'success');
