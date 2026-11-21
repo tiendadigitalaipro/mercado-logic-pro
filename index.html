@@ -2285,11 +2285,19 @@ function generateLicenseCode() {
 // Solo se consulta cuando el candado local (arriba) NO reconoce el código.
 // No reemplaza ni modifica la lógica local existente — es un fallback aditivo.
 var A2K_ENGINE_URL = 'https://a2k-license-engine.shoppingelectronics3112.workers.dev';
-async function verificarCodigoCentral(code) {
+
+// v2 — Vinculación por dispositivo anti-fraude: el motor ata la licencia al
+// deviceId en la primera activación; si ya está activa en otro equipo responde
+// other_device y la app muestra la migración en vez de activar.
+async function verificarCodigoCentral(code, deviceId) {
   try {
-    var r = await fetch(A2K_ENGINE_URL + '/validar?key=' + encodeURIComponent(code) + '&product=mercado');
+    var r = await fetch(A2K_ENGINE_URL + '/activar-cliente', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: code, product: 'mercado', deviceId: deviceId })
+    });
     var d = await r.json();
-    if (d && d.valid) {
+    if (d && d.ok) {
       var venceEn = null;
       if (d.type === 'demo' && d.daysLeft != null) {
         var v = new Date(); v.setDate(v.getDate() + d.daysLeft); v.setHours(23,59,59,999);
@@ -2297,8 +2305,25 @@ async function verificarCodigoCentral(code) {
       }
       return { valid: true, tipo: d.type === 'demo' ? 'DEMO' : 'PRO', venceEn: venceEn };
     }
+    if (d && d.reason === 'other_device') return { valid: false, reason: 'other_device' };
   } catch (e) { /* sin internet u motor no disponible — no bloquea, cae a inválido */ }
   return { valid: false };
+}
+
+// Revalidación en línea al abrir: si la licencia fue migrada a otro equipo o
+// revocada, este dispositivo se desconecta automáticamente.
+function revalidarLicenciaOnline(code, deviceId) {
+  try {
+    fetch(A2K_ENGINE_URL + '/validar?key=' + encodeURIComponent(code) + '&product=mercado&deviceId=' + encodeURIComponent(deviceId))
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d && d.valid === false) {
+          IRON_LOCK.deactivate();
+          location.reload();
+        }
+      })
+      .catch(function(){ /* offline: no bloquear */ });
+  } catch(e) {}
 }
 
 const IRON_LOCK = {
@@ -2341,7 +2366,7 @@ const IRON_LOCK = {
 
     validateLicense(license, deviceId) {
         if (!license) return { valid: false, reason: 'Sin licencia' };
-        if (!license.code || !license.code.startsWith('MERCA-')) return { valid: false, reason: 'Formato de licencia inválido' };
+        if (!license.code || (!license.code.startsWith('MERCA-') && !/^(PRO|DEMO)-MERCADO-/.test(license.code))) return { valid: false, reason: 'Formato de licencia inválido' };
         if (license.status === 'Revocada') return { valid: false, reason: 'Licencia revocada por administrador' };
         // Si es licencia EMBEDDED (pre-aprobada por admin), NO verificar Device ID
         var isEmbedded = EMBEDDED_LICENSES.some(function(l) { return l.code === license.code; });
@@ -2389,7 +2414,10 @@ const IRON_LOCK = {
         // 4) Último intento: si el candado local no reconoce el código, consultar el motor central
         // A2K License Engine (respaldo aditivo, no reemplaza la lógica local existente)
         if (!license) {
-            const central = await verificarCodigoCentral(code);
+            const central = await verificarCodigoCentral(code, deviceId);
+            if (central.reason === 'other_device') {
+                return { success: false, message: '🔒 Esta licencia está activa en OTRO dispositivo. Si cambiaste de PC o celular, solicita tu migración GRATIS: WhatsApp +58 416 411 7331' };
+            }
             if (central.valid) {
                 license = {
                     id: Date.now(),
@@ -2400,7 +2428,8 @@ const IRON_LOCK = {
                     code: code,
                     createdAt: new Date().toISOString(),
                     expiresAt: central.venceEn,
-                    status: 'Activa'
+                    status: 'Activa',
+                    fuente: 'engine'
                 };
                 isEmbedded = true;
             }
@@ -2434,6 +2463,7 @@ const IRON_LOCK = {
 
     integrityCheck(license, deviceId) {
         if (!license) return true;
+        if (license.fuente === 'engine') return true; // las del motor central se revalidan online
         // Buscar en localStorage Y en la base embebida
         const licenses = this.getLicenses();
         let found = licenses.find(l => l.code === license.code);
@@ -2460,6 +2490,7 @@ const LICENSE_UI = {
         }
 
         if (validation.valid) {
+            revalidarLicenciaOnline(validation.license.code, this.deviceId);
             if (validation.license.type === 'DEMO') {
                 this.showDemoScreen(validation.license, validation.daysLeft);
             } else {
