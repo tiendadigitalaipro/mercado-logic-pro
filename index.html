@@ -319,6 +319,10 @@ body.dark .stock-critical { background: rgba(239,68,68,0.15); }
             <span class="material-symbols-outlined">local_shipping</span>
             <span class="font-inter text-sm font-medium">Proveedores (F5)</span>
         </a>
+        <a class="nav-item flex items-center gap-3 px-3 py-2 text-slate-700 hover:bg-slate-200 hover:translate-x-1 transition-transform duration-200 rounded-md cursor-pointer" data-view="fiscal" onclick="POS.navigate('fiscal')">
+            <span class="material-symbols-outlined">account_balance</span>
+            <span class="font-inter text-sm font-medium">Libro Fiscal</span>
+        </a>
         <a class="nav-item flex items-center gap-3 px-3 py-2 text-slate-700 hover:bg-slate-200 hover:translate-x-1 transition-transform duration-200 rounded-md cursor-pointer" data-view="configuracion" onclick="POS.navigate('configuracion')">
             <span class="material-symbols-outlined">settings</span>
             <span class="font-inter text-sm font-medium">Configuración</span>
@@ -800,6 +804,40 @@ body.dark .stock-critical { background: rgba(239,68,68,0.15); }
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- ==================== VIEW: LIBRO FISCAL ==================== -->
+    <section id="view-fiscal" class="view-section flex-1 overflow-hidden">
+        <div class="flex-1 p-6 overflow-y-auto h-full">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="text-lg font-black text-on-surface uppercase italic font-headline">📒 Libro Fiscal SENIAT</h2>
+                    <p class="text-[11px] text-outline">Libro de ventas, compras, diario, mayor y balance — listos para imprimir o exportar a Excel (CSV) para tu contador. Con IGTF e IVA.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="month" id="fisc-periodo" class="px-3 py-2 rounded-lg border border-outline-variant/30 bg-surface text-sm font-bold text-on-surface" onchange="FISC.render()">
+                    <button onclick="FISC.todos()" class="px-3 py-2 rounded-lg bg-surface-container-high text-xs font-bold text-on-surface hover:bg-surface-container-highest transition-all">Todos</button>
+                    <button onclick="FISC.print()" class="px-3 py-2 rounded-lg bg-blue-700 text-white text-xs font-bold hover:bg-blue-800 transition-all flex items-center gap-1"><span class="material-symbols-outlined text-sm">print</span> Imprimir</button>
+                </div>
+            </div>
+            <div id="fisc-stats" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
+            <div class="flex gap-1 mb-4 flex-wrap">
+                <button class="fisc-tab active" data-tab="resumen" onclick="FISC.tab('resumen')">Resumen</button>
+                <button class="fisc-tab" data-tab="ventas" onclick="FISC.tab('ventas')">Libro de Ventas</button>
+                <button class="fisc-tab" data-tab="compras" onclick="FISC.tab('compras')">Libro de Compras</button>
+                <button class="fisc-tab" data-tab="diario" onclick="FISC.tab('diario')">Libro Diario</button>
+                <button class="fisc-tab" data-tab="mayor" onclick="FISC.tab('mayor')">Mayor y Balance</button>
+                <button class="fisc-tab" data-tab="ventasdev" onclick="FISC.tab('ventasdev')">Ventas y Devoluciones</button>
+                <button class="fisc-tab" data-tab="config" onclick="FISC.tab('config')">Configuración</button>
+            </div>
+            <div id="fiscTab-resumen" class="fisc-tab-content"></div>
+            <div id="fiscTab-ventas" class="fisc-tab-content hidden"></div>
+            <div id="fiscTab-compras" class="fisc-tab-content hidden"></div>
+            <div id="fiscTab-diario" class="fisc-tab-content hidden"></div>
+            <div id="fiscTab-mayor" class="fisc-tab-content hidden"></div>
+            <div id="fiscTab-ventasdev" class="fisc-tab-content hidden"></div>
+            <div id="fiscTab-config" class="fisc-tab-content hidden"></div>
         </div>
     </section>
 
@@ -2048,7 +2086,7 @@ body.dark .stock-critical { background: rgba(239,68,68,0.15); }
             </div>
         </div>
         <div class="p-4 border-t border-outline-variant/20 text-center">
-            <p class="text-[10px] text-outline">MERCADO LOGIC PRO v1.0</p>
+            <p class="text-[10px] text-outline">MERCADO LOGIC PRO v2.1</p>
         </div>
     </div>
 </div>
@@ -2857,6 +2895,7 @@ function navigateTo(view) {
     if (view === 'reportes') RPT.render();
     if (view === 'configuracion') CFG.load();
     if (view === 'proveedores') PROV.render();
+    if (view === 'fiscal') FISC.render();
 }
 
 // ======================== POS MODULE ========================
@@ -4040,7 +4079,7 @@ ${methodLines || '  Sin ventas'}
   20% Ganancia   : $${ganancia.toFixed(2)} | Bs. ${(ganancia*tasa).toFixed(2)}
 
 ════════════════════════════════════════
-  MERCADO LOGIC PRO v1.0 — A2K Studio
+  MERCADO LOGIC PRO v2.1 — A2K Studio
 ════════════════════════════════════════
         `.trim();
         const w = window.open('', '_blank', 'width=500,height=600');
@@ -5443,5 +5482,390 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<style>
+.fisc-tab{padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;background:rgba(148,163,184,.12);color:#475569;cursor:pointer;border:1px solid transparent;transition:all .15s}
+.fisc-tab.active{background:#1d4ed8;color:#fff;box-shadow:0 2px 8px rgba(29,78,216,.35)}
+.fisc-table{width:100%;border-collapse:collapse;font-size:12px;background:#fff}
+.fisc-table th{background:#f1f5f9;color:#334155;font-weight:800;text-transform:uppercase;font-size:10px;padding:8px 10px;text-align:left;border-bottom:2px solid #e2e8f0}
+.fisc-table td{padding:7px 10px;border-bottom:1px solid #f1f5f9;color:#1e293b}
+.fisc-table tr:hover td{background:#f8fafc}
+.fisc-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:14px}
+.fisc-card .lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#64748b}
+.fisc-card .val{font-size:18px;font-black:900;font-weight:900;color:#0f172a;margin-top:2px}
+.fisc-inp{width:100%;padding:9px 12px;border-radius:10px;border:1px solid #cbd5e1;font-size:13px;box-sizing:border-box}
+.fisc-btn{padding:9px 14px;border-radius:10px;border:none;background:#1d4ed8;color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+.fisc-btn.sec{background:#e2e8f0;color:#334155}
+.fisc-btn.red{background:#dc2626;color:#fff}
+</style>
+<script>
+// ============================================================
+// LIBRO FISCAL SENIAT + DEVOLUCIONES + FACTURA (v1.1) — Mercado Logic Pro
+// ============================================================
+var FISC_PERIODO = '';
+var FISC_TAB = 'resumen';
+var FISC_DIVISAS_DEFAULT = ['Efectivo USD','Zelle','Divisas','Dólares','USD','Efectivo $'];
+
+function fiscCfg(){
+  var c = DB.get('config') || {}; var f = c.fiscal || {};
+  return { iva:(f.iva!=null?f.iva:16), igtf:(f.igtf!=null?f.igtf:3),
+           divisas:(f.divisas&&f.divisas.length?f.divisas.slice():FISC_DIVISAS_DEFAULT.slice()) };
+}
+function fiscFiltrar(arr){
+  if(!FISC_PERIODO) return arr||[];
+  return (arr||[]).filter(function(x){ return (x.date||x.fecha||'').indexOf(FISC_PERIODO)===0; });
+}
+function fiscFecha(iso){ try{ return new Date(iso).toLocaleDateString('es-VE'); }catch(e){ return iso||'—'; } }
+function fiscCalcML(){
+  var cfg=fiscCfg(); var factor=1+cfg.iva/100;
+  var ventas=fiscFiltrar(DB.get('sales'));
+  var t={n:0,bruto:0,iva:0,neto:0,divisas:0,igtf:0,devoluciones:0,compras:0,pagosProv:0,egresos:0,cxc:0,cxp:0};
+  var porMetodo={};
+  ventas.forEach(function(v){
+    var total=v.total||0; var iva=total-total/factor;
+    var esDiv=(cfg.divisas.indexOf(v.method)>=0);
+    t.n++; t.bruto+=total; t.iva+=iva; t.neto+=total/factor;
+    if(esDiv){ t.divisas+=total; t.igtf+=total*cfg.igtf/100; }
+    var m=v.method||'—';
+    if(!porMetodo[m]) porMetodo[m]={n:0,total:0,div:0};
+    porMetodo[m].n++; porMetodo[m].total+=total; if(esDiv) porMetodo[m].div+=total;
+  });
+  var ncs=fiscFiltrar(DB.get('notasCredito'));
+  t.devoluciones=ncs.reduce(function(s,x){ return s+(x.totalUSD||0); },0);
+  var pp=fiscFiltrar(DB.get('pagos_proveedores'));
+  t.compras=pp.filter(function(x){ return x.tipo==='deuda'; }).reduce(function(s,x){ return s+(x.monto||0); },0);
+  t.pagosProv=pp.filter(function(x){ return x.tipo==='pago'; }).reduce(function(s,x){ return s+(x.monto||0); },0);
+  var movs=fiscFiltrar(DB.get('caja_movimientos'));
+  t.egresos=movs.filter(function(x){ return x.tipo==='salida'||x.tipo==='egreso'; }).reduce(function(s,x){ return s+Math.abs(x.monto||0); },0);
+  t.cxc=(DB.get('clientes')||[]).reduce(function(s,c){ return s+(c.deuda||0); },0);
+  t.cxp=(DB.get('proveedores')||[]).reduce(function(s,p){ return s+(p.deudaPendiente||p.deuda||0); },0);
+  ['bruto','iva','neto','divisas','igtf','devoluciones','compras','pagosProv','egresos','cxc','cxp'].forEach(function(k){ t[k]=parseFloat(t[k].toFixed(2)); });
+  return { cfg:cfg, t:t, porMetodo:porMetodo, ventas:ventas, ncs:ncs };
+}
+function fiscCard(lbl,val,color){
+  return '<div class="fisc-card"><div class="lbl">'+lbl+'</div><div class="val" style="color:'+(color||'#0f172a')+'">'+val+'</div></div>';
+}
+var FISC = {
+  render: function(){
+    if(!FISC_PERIODO){ var d=new Date(); FISC_PERIODO=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); var pe=$('fisc-periodo'); if(pe) pe.value=FISC_PERIODO; }
+    var f=fiscCalcML(); var t=f.t;
+    $('fisc-stats').innerHTML =
+      fiscCard('Ventas brutas', formatMoney(t.bruto), '#1d4ed8') +
+      fiscCard('IVA débito ('+f.cfg.iva+'%)', formatMoney(t.iva), '#7c3aed') +
+      fiscCard('Ventas netas', formatMoney(t.neto), '#059669') +
+      fiscCard('IGTF estimado ('+f.cfg.igtf+'%)', formatMoney(t.igtf), '#d97706');
+    this.renderResumen(f); this.renderVentas(f); this.renderCompras(f);
+    this.renderDiario(f); this.renderMayor(f); this.renderVentasDev(f); this.renderConfig(f);
+  },
+  todos: function(){ FISC_PERIODO=''; var pe=$('fisc-periodo'); if(pe) pe.value=''; this.render(); },
+  tab: function(name){
+    FISC_TAB=name;
+    document.querySelectorAll('.fisc-tab').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab')===name); });
+    document.querySelectorAll('.fisc-tab-content').forEach(function(d){ d.classList.toggle('hidden', d.id!=='fiscTab-'+name); });
+  },
+  print: function(){
+    var el=$('fiscTab-'+FISC_TAB);
+    var w=window.open('','_blank','width=900,height=700');
+    if(!w) return;
+    w.document.write('<html><head><title>Libro Fiscal SENIAT — Mercado Logic Pro</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#000}h2{font-size:16px;margin:0 0 4px}p.sub{font-size:11px;color:#555;margin:0 0 16px}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#eee;padding:6px 8px;text-align:left;border-bottom:2px solid #ccc}td{padding:5px 8px;border-bottom:1px solid #ddd}</style></head><body><h2>📒 Libro Fiscal SENIAT — Mercado Logic Pro</h2><p class="sub">Período: '+(FISC_PERIODO||'Todo el historial')+' · Generado: '+new Date().toLocaleString('es-VE')+'</p>'+el.innerHTML+'</body></html>');
+    w.document.close(); w.print();
+  },
+  csv: function(nombre, filas){
+    var csv=filas.map(function(r){ return r.map(function(c){ return '"'+String(c==null?'':c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+    var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nombre; a.click();
+  },
+  renderResumen: function(f){
+    var t=f.t; var filas=Object.keys(f.porMetodo).map(function(m){ var x=f.porMetodo[m]; return '<tr><td>'+m+'</td><td style="text-align:center">'+x.n+'</td><td style="text-align:right;font-weight:700">'+formatMoney(x.total)+'</td><td style="text-align:right;color:#d97706;font-weight:700">'+formatMoney(x.div)+'</td></tr>'; }).join('');
+    $('fiscTab-resumen').innerHTML =
+      '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">'+
+      fiscCard('Devoluciones (NC)', formatMoney(t.devoluciones), '#dc2626')+
+      fiscCard('Compras registradas', formatMoney(t.compras), '#0891b2')+
+      fiscCard('Cuentas por cobrar', formatMoney(t.cxc), '#be185d')+
+      fiscCard('Cuentas por pagar', formatMoney(t.cxp), '#b45309')+
+      '</div>'+
+      '<div class="fisc-card"><div class="lbl" style="margin-bottom:8px">Ventas por método de pago</div>'+
+      '<table class="fisc-table"><thead><tr><th>Método</th><th style="text-align:center"># Ventas</th><th style="text-align:right">Total</th><th style="text-align:right">En divisas (IGTF)</th></tr></thead><tbody>'+(filas||'<tr><td colspan="4" style="text-align:center;color:#94a3b8">Sin ventas en el período</td></tr>')+'</tbody></table></div>'+
+      '<div class="fisc-card" style="margin-top:12px;background:#eff6ff;border-color:#bfdbfe"><div class="lbl" style="color:#1d4ed8;margin-bottom:6px">💡 Para tu contador</div><div style="font-size:12px;color:#1e40af;line-height:1.6">Imprime esta pantalla o exporta cada libro en CSV (Excel). Los libros de Ventas, Compras, Diario, Mayor y Balance siguen el formato exigido por el SENIAT (Art. 32 Código de Comercio). El IGTF se estima sobre los pagos recibidos en divisas según la alícuota configurada.</div></div>';
+  },
+  renderVentas: function(f){
+    var cfg=f.cfg; var factor=1+cfg.iva/100; var self=this;
+    var filas=f.ventas.map(function(v){
+      var total=v.total||0; var base=total/factor; var iva=total-base;
+      return [fiscFecha(v.date), 'FAC-'+String(v.folio||v.id).padStart(5,'0'), (v.facClienteNombre||'CLIENTE VARIOS'), (v.facClienteRif||'—'), base.toFixed(2), iva.toFixed(2), '0.00', total.toFixed(2)];
+    });
+    f.ncs.forEach(function(nc){
+      filas.push([fiscFecha(nc.fecha), 'NC-'+String(nc.id).slice(-6), 'NOTA DE CRÉDITO', '—', (-(nc.totalUSD||0)/factor).toFixed(2), (-(nc.totalUSD||0)/factor*cfg.iva/100).toFixed(2), '0.00', (-(nc.totalUSD||0)).toFixed(2)]);
+    });
+    var html=filas.map(function(r){ return '<tr>'+r.map(function(c,i){ return '<td style="'+(i>=4?'text-align:right;':'')+'">'+c+'</td>'; }).join('')+'</tr>'; }).join('');
+    $('fiscTab-ventas').innerHTML =
+      '<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="fisc-btn sec" onclick="FISC.csv(\'libro_ventas_'+(FISC_PERIODO||'todo')+'.csv\', FISC.ventasCSV())">⬇️ Exportar Excel (CSV)</button></div>'+
+      '<div class="fisc-card" style="overflow-x:auto"><table class="fisc-table"><thead><tr><th>Fecha</th><th>Factura</th><th>Cliente</th><th>RIF/Cédula</th><th style="text-align:right">Base imponible</th><th style="text-align:right">IVA '+cfg.iva+'%</th><th style="text-align:right">Retención</th><th style="text-align:right">Total</th></tr></thead><tbody>'+
+      (html||'<tr><td colspan="8" style="text-align:center;color:#94a3b8">Sin ventas en el período</td></tr>')+'</tbody></table></div>';
+  },
+  ventasCSV: function(){
+    var f=fiscCalcML(); var cfg=f.cfg; var factor=1+cfg.iva/100;
+    var out=[['Fecha','Factura','Cliente','RIF/Cédula','Base Imponible','IVA '+cfg.iva+'%','Retención','Total']];
+    f.ventas.forEach(function(v){ var t=v.total||0; out.push([fiscFecha(v.date),'FAC-'+String(v.folio||v.id).padStart(5,'0'),(v.facClienteNombre||'CLIENTE VARIOS'),(v.facClienteRif||''),(t/factor).toFixed(2),(t-t/factor).toFixed(2),'0.00',t.toFixed(2)]); });
+    f.ncs.forEach(function(nc){ var t=-(nc.totalUSD||0); out.push([fiscFecha(nc.fecha),'NC-'+String(nc.id).slice(-6),'NOTA DE CRÉDITO','',(t/factor).toFixed(2),(t-t/factor).toFixed(2),'0.00',t.toFixed(2)]); });
+    return out;
+  },
+  renderCompras: function(f){
+    var cfg=f.cfg; var factor=1+cfg.iva/100;
+    var pp=fiscFiltrar(DB.get('pagos_proveedores')).filter(function(x){ return x.tipo==='deuda'; });
+    var html=pp.map(function(x){
+      var m=x.monto||0; var base=m/factor; var iva=m-base;
+      return '<tr><td>'+fiscFecha(x.date||x.fecha)+'</td><td>'+(x.desc||x.proveedor||'Compra')+'</td><td>'+(x.rif||'—')+'</td><td>'+(x.nroFactura||'—')+'</td><td style="text-align:right">'+base.toFixed(2)+'</td><td style="text-align:right">'+iva.toFixed(2)+'</td><td style="text-align:right">'+m.toFixed(2)+'</td></tr>';
+    }).join('');
+    $('fiscTab-compras').innerHTML =
+      '<div class="fisc-card" style="background:#fffbeb;border-color:#fde68a;margin-bottom:10px"><div style="font-size:12px;color:#92400e;line-height:1.6">💡 Registra las compras a proveedores desde el módulo <b>Proveedores</b> (cuenta por pagar). Aparecerán automáticas aquí con su IVA crédito fiscal.</div></div>'+
+      '<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="fisc-btn sec" onclick="FISC.csv(\'libro_compras_'+(FISC_PERIODO||'todo')+'.csv\', FISC.comprasCSV())">⬇️ Exportar Excel (CSV)</button></div>'+
+      '<div class="fisc-card" style="overflow-x:auto"><table class="fisc-table"><thead><tr><th>Fecha</th><th>Proveedor / Detalle</th><th>RIF</th><th>Factura</th><th style="text-align:right">Base imponible</th><th style="text-align:right">IVA '+cfg.iva+'%</th><th style="text-align:right">Total</th></tr></thead><tbody>'+
+      (html||'<tr><td colspan="7" style="text-align:center;color:#94a3b8">Sin compras registradas en el período</td></tr>')+'</tbody></table></div>';
+  },
+  comprasCSV: function(){
+    var f=fiscCalcML(); var cfg=f.cfg; var factor=1+cfg.iva/100;
+    var out=[['Fecha','Proveedor/Detalle','RIF','Factura','Base Imponible','IVA '+cfg.iva+'%','Total']];
+    fiscFiltrar(DB.get('pagos_proveedores')).filter(function(x){ return x.tipo==='deuda'; }).forEach(function(x){ var m=x.monto||0; out.push([fiscFecha(x.date||x.fecha),(x.desc||x.proveedor||'Compra'),(x.rif||''),(x.nroFactura||''),(m/factor).toFixed(2),(m-m/factor).toFixed(2),m.toFixed(2)]); });
+    return out;
+  },
+  asientos: function(f){
+    var cfg=f.cfg; var factor=1+cfg.iva/100; var A=[];
+    f.ventas.forEach(function(v){
+      var t=v.total||0; var iva=t-t/factor;
+      var cta=(cfg.divisas.indexOf(v.method)>=0)?'BANCOS Y DIVISAS':'CAJA';
+      A.push({f:v.date, d:'Venta FAC-'+String(v.folio||v.id).padStart(5,'0'), ctas:[[cta,t,''],['IVA DÉBITO FISCAL','',iva],['VENTAS','',t-iva]]});
+    });
+    f.ncs.forEach(function(nc){
+      var t=nc.totalUSD||0; var iva=t-t/factor;
+      A.push({f:nc.fecha, d:'Nota de crédito NC-'+String(nc.id).slice(-6)+' ('+(nc.motivo||'')+')', ctas:[['DEVOLUCIONES S/V',t-iva,''],['IVA DÉBITO FISCAL',iva,''],['CAJA','',t]]});
+    });
+    fiscFiltrar(DB.get('pagos_proveedores')).filter(function(x){ return x.tipo==='deuda'; }).forEach(function(x){
+      var m=x.monto||0; var iva=m-m/factor;
+      A.push({f:x.date||x.fecha, d:'Compra: '+(x.desc||x.proveedor||''), ctas:[['INVENTARIO (COMPRAS)',m-iva,''],['IVA CRÉDITO FISCAL',iva,''],['CUENTAS POR PAGAR','',m]]});
+    });
+    return A;
+  },
+  renderDiario: function(f){
+    var rows=this.asientos(f).map(function(a){
+      return a.ctas.map(function(c,i){
+        return '<tr><td>'+(i===0?fiscFecha(a.f):'')+'</td><td>'+(i===0?a.d:'')+'</td><td style="'+(c[1]!==''?'text-align:right;font-weight:700':'')+'">'+(c[1]!==''?c[1].toFixed(2):'')+'</td><td style="'+(c[2]!==''?'text-align:right;font-weight:700':'')+'">'+(c[2]!==''?c[2].toFixed(2):'')+'</td></tr>';
+      }).join('');
+    }).join('');
+    $('fiscTab-diario').innerHTML =
+      '<div class="fisc-card" style="overflow-x:auto"><table class="fisc-table"><thead><tr><th>Fecha</th><th>Descripción / Cuenta</th><th style="text-align:right">Debe</th><th style="text-align:right">Haber</th></tr></thead><tbody>'+
+      (rows||'<tr><td colspan="4" style="text-align:center;color:#94a3b8">Sin movimientos en el período</td></tr>')+'</tbody></table></div>';
+  },
+  renderMayor: function(f){
+    var cuentas={};
+    this.asientos(f).forEach(function(a){ a.ctas.forEach(function(c){
+      if(!cuentas[c[0]]) cuentas[c[0]]={debe:0,haber:0};
+      cuentas[c[0]].debe+=c[1]||0; cuentas[c[0]].haber+=c[2]||0;
+    }); });
+    var nombres=Object.keys(cuentas);
+    var td=0,th=0;
+    var rows=nombres.map(function(n){ var c=cuentas[n]; var saldo=c.debe-c.haber; td+=c.debe; th+=c.haber;
+      return '<tr><td style="font-weight:700">'+n+'</td><td style="text-align:right">'+c.debe.toFixed(2)+'</td><td style="text-align:right">'+c.haber.toFixed(2)+'</td><td style="text-align:right;font-weight:800;color:'+(saldo>=0?'#1d4ed8':'#dc2626')+'">'+saldo.toFixed(2)+'</td></tr>';
+    }).join('');
+    $('fiscTab-mayor').innerHTML =
+      '<div class="fisc-card" style="overflow-x:auto;margin-bottom:12px"><div class="lbl" style="margin-bottom:8px">Libro Mayor analítico</div><table class="fisc-table"><thead><tr><th>Cuenta</th><th style="text-align:right">Suma Debe</th><th style="text-align:right">Suma Haber</th><th style="text-align:right">Saldo (Deudor/Acreedor)</th></tr></thead><tbody>'+
+      (rows||'<tr><td colspan="4" style="text-align:center;color:#94a3b8">Sin movimientos</td></tr>')+
+      '<tr style="background:#f8fafc;font-weight:900"><td>TOTALES</td><td style="text-align:right">'+td.toFixed(2)+'</td><td style="text-align:right">'+th.toFixed(2)+'</td><td style="text-align:right">'+(td-th).toFixed(2)+'</td></tr></tbody></table></div>'+
+      '<div class="fisc-card"><div class="lbl" style="margin-bottom:8px">Balance de comprobación</div><div style="font-size:12px;color:#475569;line-height:1.7">Total Debe: <b style="color:#1d4ed8">'+formatMoney(td)+'</b> · Total Haber: <b style="color:#059669">'+formatMoney(th)+'</b> · Diferencia: <b style="color:'+(Math.abs(td-th)<0.01?'#059669':'#dc2626')+'">'+formatMoney(td-th)+'</b>'+(Math.abs(td-th)<0.01?' ✅ Cuadra':' ⚠️ No cuadra — revisa devoluciones')+'</div></div>';
+  },
+  renderVentasDev: function(f){
+    var sales=(DB.get('sales')||[]).slice().reverse();
+    var tasa=getTasa();
+    var rows=sales.map(function(v){
+      var badge=v.devuelta?' <span style="font-size:9px;padding:2px 6px;background:#fee2e2;color:#dc2626;border-radius:8px;font-weight:800">DEV TOTAL</span>':(v.devueltaParcial?' <span style="font-size:9px;padding:2px 6px;background:#fef3c7;color:#b45309;border-radius:8px;font-weight:800">DEV '+formatMoney(v.montoDevuelto||0)+'</span>':'');
+      var acciones='<button class="fisc-btn sec" style="padding:5px 9px;font-size:11px" onclick="facturaMLAbrir('+v.id+')" title="Factura formato SENIAT">📄 Factura</button> '+
+        (v.devuelta?'':'<button class="fisc-btn red" style="padding:5px 9px;font-size:11px" onclick="abrirDevolucionML('+v.id+')" title="Procesar devolución">↩️ Devolver</button>');
+      return '<tr><td>#'+String(v.folio||v.id).padStart(5,'0')+'</td><td>'+fiscFecha(v.date)+'<br><span style="font-size:10px;color:#94a3b8">'+new Date(v.date).toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'})+'</span></td><td>'+(v.items||[]).map(function(i){ return i.name+' x'+i.qty; }).join(', ')+'</td><td>'+(v.method||'—')+badge+'</td><td style="text-align:right;font-weight:800;color:#1d4ed8">'+formatMoney(v.total)+'</td><td style="text-align:right;color:#059669">'+formatBs(v.total)+'</td><td style="white-space:nowrap">'+acciones+'</td></tr>';
+    }).join('');
+    $('fiscTab-ventasdev').innerHTML =
+      '<div class="fisc-card" style="overflow-x:auto"><div class="lbl" style="margin-bottom:8px">Historial de ventas — devoluciones por producto con nota de crédito</div><table class="fisc-table"><thead><tr><th>Folio</th><th>Fecha</th><th>Productos</th><th>Método</th><th style="text-align:right">Total</th><th style="text-align:right">Bs</th><th>Acciones</th></tr></thead><tbody>'+
+      (rows||'<tr><td colspan="7" style="text-align:center;color:#94a3b8">Sin ventas registradas</td></tr>')+'</tbody></table></div>';
+  },
+  renderConfig: function(f){
+    var cfg=fiscCfg(); var c=DB.get('config')||{}; var fc=c.factura||{};
+    var metodosObs={}; (DB.get('sales')||[]).forEach(function(v){ if(v.method) metodosObs[v.method]=1; });
+    FISC_DIVISAS_DEFAULT.forEach(function(m){ metodosObs[m]=1; });
+    var checks=Object.keys(metodosObs).map(function(m){
+      return '<label style="display:inline-flex;align-items:center;gap:6px;margin:3px 10px 3px 0;font-size:12px;cursor:pointer"><input type="checkbox" class="fisc-div-check" value="'+m+'" style="width:15px;height:15px"'+(cfg.divisas.indexOf(m)>=0?' checked':'')+'> '+m+'</label>';
+    }).join('');
+    $('fiscTab-config').innerHTML =
+      '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">'+
+      '<div class="fisc-card"><div class="lbl" style="margin-bottom:10px">Impuestos (SENIAT)</div>'+
+      '<label style="font-size:11px;font-weight:700;color:#64748b">IVA %</label><input type="number" id="fisc-iva" class="fisc-inp" step="0.5" value="'+cfg.iva+'" style="margin:4px 0 12px">'+
+      '<label style="font-size:11px;font-weight:700;color:#64748b">IGTF % (pago en divisas)</label><input type="number" id="fisc-igtf" class="fisc-inp" step="0.5" value="'+cfg.igtf+'" style="margin:4px 0 12px">'+
+      '<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Métodos de pago que cuentan como DIVISAS (disparan IGTF)</div><div>'+checks+'</div></div>'+
+      '<div class="fisc-card"><div class="lbl" style="margin-bottom:10px">Factura formato SENIAT (documento no fiscal)</div>'+
+      '<label style="font-size:11px;font-weight:700;color:#64748b">Serial de la máquina</label><input type="text" id="facml-serial" class="fisc-inp" value="'+(fc.serial||'')+'" placeholder="Z1B34" style="margin:4px 0 12px">'+
+      '<label style="font-size:11px;font-weight:700;color:#64748b">Prefijo Nro. de Control (2 letras)</label><input type="text" id="facml-pref" class="fisc-inp" value="'+(fc.ctrlPrefijo||'AA')+'" maxlength="2" style="margin:4px 0 12px">'+
+      '<div style="font-size:11px;color:#64748b;line-height:1.6">Razón social y RIF salen de <b>Configuración</b> (nombre y RFC/RIF del negocio). La numeración de facturas y controles avanza automático desde el próximo número disponible.</div></div>'+
+      '</div>'+
+      '<div style="margin-top:14px"><button class="fisc-btn" onclick="FISC.saveConfig()">💾 Guardar configuración fiscal</button></div>';
+  },
+  saveConfig: function(){
+    var c=DB.get('config')||{};
+    c.fiscal={ iva:parseFloat($('fisc-iva').value)||16, igtf:parseFloat($('fisc-igtf').value)||3,
+               divisas:[].slice.call(document.querySelectorAll('.fisc-div-check')).filter(function(x){ return x.checked; }).map(function(x){ return x.value; }) };
+    c.factura=c.factura||{};
+    c.factura.serial=$('facml-serial').value.trim();
+    c.factura.ctrlPrefijo=($('facml-pref').value.trim()||'AA').toUpperCase();
+    DB.set('config',c);
+    toast('Configuración fiscal guardada');
+    this.render();
+  }
+};
+
+// ============ DEVOLUCIONES (v1.1) — por item con nota de crédito ============
+function abrirDevolucionML(id){
+  var sales=DB.get('sales')||[];
+  var v=sales.find(function(x){ return x.id===id; });
+  if(!v){ toast('Venta no encontrada','error'); return; }
+  if(v.devuelta){ toast('Esta venta ya fue devuelta completamente','warn'); return; }
+  var dq={}; (v.itemsDevueltos||[]).forEach(function(d){ dq[d.productId]=(dq[d.productId]||0)+d.qty; });
+  var items=(v.items||[]).map(function(it,i){
+    var dev=dq[it.productId]||0; var rest=it.qty-dev;
+    if(rest<=0) return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9;opacity:.5"><span style="flex:1;font-size:13px">'+it.name+'</span><span style="font-size:10px;padding:2px 6px;background:#fee2e2;color:#dc2626;border-radius:8px;font-weight:800">DEVUELTO</span></div>';
+    return '<label style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9;cursor:pointer"><input type="checkbox" class="devml-check" value="'+i+'" data-qty="'+rest+'" style="width:16px;height:16px" checked><span style="flex:1;font-size:13px">'+it.name+'</span><span style="font-size:12px;color:#94a3b8">'+rest+'/'+it.qty+'</span><span style="font-size:13px;font-weight:800;color:#1d4ed8">'+formatMoney(it.price*rest)+'</span></label>';
+  }).join('');
+  var old=document.getElementById('modalDevML'); if(old) old.remove();
+  var m=document.createElement('div');
+  m.id='modalDevML';
+  m.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
+  m.innerHTML='<div style="background:#fff;border-radius:18px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-sizing:border-box;font-family:Arial,sans-serif">'+
+    '<div style="font-size:16px;font-weight:900;color:#dc2626;margin-bottom:4px">↩️ Devolución de Venta</div>'+
+    '<div style="font-size:12px;color:#64748b;margin-bottom:14px">Folio #'+String(v.folio||id).padStart(5,'0')+' · '+formatMoney(v.total)+'</div>'+
+    '<div style="max-height:220px;overflow-y:auto;margin-bottom:12px">'+items+'</div>'+
+    '<label style="font-size:11px;font-weight:800;color:#475569;display:block;margin-bottom:6px">MOTIVO *</label>'+
+    '<input type="text" id="devml-motivo" class="fisc-inp" placeholder="Producto dañado, equivocación, etc." style="margin-bottom:14px">'+
+    '<div style="display:flex;gap:8px"><button onclick="document.getElementById(\'modalDevML\').remove()" style="flex:1;padding:11px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;color:#64748b;font-weight:700">Cancelar</button>'+
+    '<button onclick="confirmarDevolucionML('+id+')" style="flex:1;padding:11px;border-radius:10px;border:none;background:#dc2626;color:#fff;cursor:pointer;font-size:14px;font-weight:800">↩️ Confirmar</button></div></div>';
+  document.body.appendChild(m);
+}
+function confirmarDevolucionML(id){
+  var sales=DB.get('sales')||[];
+  var v=sales.find(function(x){ return x.id===id; });
+  if(!v){ toast('Venta no encontrada','error'); return; }
+  var motivo=(($('devml-motivo')||{}).value||'').trim();
+  if(!motivo){ toast('Ingresa el motivo de la devolución','warn'); return; }
+  var checks=[];
+  document.querySelectorAll('.devml-check').forEach(function(cb){ if(cb.checked) checks.push(cb); });
+  if(!checks.length){ toast('Selecciona al menos un producto','warn'); return; }
+  var monto=0, costoDev=0;
+  var itemsDevueltos=[];
+  var prods=DB.get('products')||[];
+  var quedan=false;
+  checks.forEach(function(ch){
+    var it=(v.items||[])[parseInt(ch.value)];
+    if(!it) return;
+    var q=parseInt(ch.dataset.qty)||it.qty;
+    monto+=it.price*q;
+    var p=prods.find(function(x){ return x.id===it.productId; });
+    costoDev+=((it.cost!=null?it.cost:(p?(p.cost||0):0)))*q;
+    itemsDevueltos.push({productId:it.productId, nombre:it.name, qty:q, subtotal:parseFloat((it.price*q).toFixed(2))});
+    if(p) p.stock=(p.stock||0)+q;
+  });
+  // verificar si quedan items sin devolver
+  var dq={}; itemsDevueltos.forEach(function(d){ dq[d.productId]=(dq[d.productId]||0)+d.qty; });
+  (v.items||[]).forEach(function(it){ if(it.qty-(dq[it.productId]||0)>0) quedan=true; });
+  DB.set('products',prods);
+  monto=parseFloat(monto.toFixed(2)); costoDev=parseFloat(costoDev.toFixed(2));
+  var tasa=getTasa();
+  v.montoDevuelto=parseFloat(((v.montoDevuelto||0)+monto).toFixed(2));
+  v.total=parseFloat(Math.max(0,(v.total||0)-monto).toFixed(2));
+  v.devuelta=!quedan;
+  v.devueltaParcial=quedan&&v.montoDevuelto>0;
+  v.motivoDev=motivo;
+  v.itemsDevueltos=(v.itemsDevueltos||[]).concat(itemsDevueltos);
+  DB.set('sales',sales);
+  var ncs=DB.get('notasCredito')||[];
+  ncs.push({id:Date.now(), ventaId:id, fecha:new Date().toISOString(), totalUSD:monto, totalBs:parseFloat((monto*tasa).toFixed(2)), motivo:motivo, esTotal:!quedan, items:itemsDevueltos});
+  DB.set('notasCredito',ncs);
+  var m=document.getElementById('modalDevML'); if(m) m.remove();
+  toast('↩️ Devolución '+(!quedan?'total':'parcial '+formatMoney(monto))+' — stock restaurado');
+  try{ FISC.render(); }catch(e){}
+}
+
+// ============ FACTURA FORMATO SENIAT (documento NO fiscal) ============
+function facMLAsignar(v){
+  var c=DB.get('config')||{};
+  c.factura=c.factura||{};
+  if(v.numFactura) return;
+  c.factura.ultimaFactura=(c.factura.ultimaFactura||0)+1;
+  v.numFactura=String(c.factura.ultimaFactura).padStart(8,'0');
+  var pref=(c.factura.ctrlPrefijo||'AA').toUpperCase().replace(/[^A-Z]/g,'').slice(0,2)||'AA';
+  c.factura.ultimoControl=(c.factura.ultimoControl||0)+1;
+  v.numControl=pref+String(c.factura.ultimoControl).padStart(10,'0');
+  DB.set('config',c);
+  var sales=DB.get('sales')||[]; var x=sales.find(function(y){ return y.id===v.id; });
+  if(x){ x.numFactura=v.numFactura; x.numControl=v.numControl; DB.set('sales',sales); }
+}
+function facturaMLAbrir(ventaId){
+  var v=(DB.get('sales')||[]).find(function(x){ return x.id===ventaId; });
+  if(!v){ toast('Venta no encontrada','warn'); return; }
+  facMLAsignar(v);
+  var old=document.getElementById('modalFacML'); if(old) old.remove();
+  var w=document.createElement('div');
+  w.id='modalFacML';
+  w.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
+  w.innerHTML='<div style="background:#fff;border-radius:18px;padding:24px;width:100%;max-width:420px;box-sizing:border-box;font-family:Arial,sans-serif">'+
+    '<div style="font-size:16px;font-weight:900;margin-bottom:14px">🧾 Datos del comprador</div>'+
+    '<label style="font-size:11px;font-weight:800;color:#475569;display:block;margin-bottom:6px">Nombre o razón social</label>'+
+    '<input type="text" id="facml-cli-nombre" class="fisc-inp" value="'+((v.facClienteNombre||'').replace(/"/g,'&quot;'))+'" placeholder="CLIENTE VARIOS" style="margin-bottom:12px">'+
+    '<label style="font-size:11px;font-weight:800;color:#475569;display:block;margin-bottom:6px">RIF o Cédula</label>'+
+    '<input type="text" id="facml-cli-rif" class="fisc-inp" value="'+((v.facClienteRif||'').replace(/"/g,'&quot;'))+'" placeholder="J-12345678-9" style="margin-bottom:14px">'+
+    '<div style="font-size:11px;color:#64748b;margin-bottom:14px">Deja vacío para "CLIENTE VARIOS". Estos datos salen impresos junto al Nro. de control.</div>'+
+    '<div style="display:flex;gap:8px"><button onclick="document.getElementById(\'modalFacML\').remove()" style="flex:1;padding:11px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;color:#64748b;font-weight:700">Cancelar</button>'+
+    '<button onclick="facturaMLEmitir('+v.id+')" style="flex:1;padding:11px;border-radius:10px;border:none;background:#1d4ed8;color:#fff;cursor:pointer;font-weight:800">✅ Generar factura</button></div></div>';
+  document.body.appendChild(w);
+}
+function facturaMLEmitir(ventaId){
+  var sales=DB.get('sales')||[];
+  var v=sales.find(function(x){ return x.id===ventaId; });
+  if(!v) return;
+  v.facClienteNombre=(($('facml-cli-nombre')||{}).value||'').trim()||'CLIENTE VARIOS';
+  v.facClienteRif=(($('facml-cli-rif')||{}).value||'').trim();
+  facMLAsignar(v);
+  DB.set('sales',sales);
+  var m=document.getElementById('modalFacML'); if(m) m.remove();
+  facturaMLVer(v);
+}
+function facturaMLVer(v){
+  var c=DB.get('config')||{}; var fc=c.factura||{};
+  var cfg=fiscCfg(); var factor=1+cfg.iva/100;
+  var total=v.total||0; var base=total/factor; var iva=total-base; var tasa=getTasa();
+  var items=(v.items||[]).map(function(it){
+    return '<tr><td style="padding:4px 6px;border-bottom:1px solid #ddd">'+it.name+'</td><td style="padding:4px 6px;border-bottom:1px solid #ddd;text-align:center">'+it.qty+'</td><td style="padding:4px 6px;border-bottom:1px solid #ddd;text-align:right">'+it.price.toFixed(2)+'</td><td style="padding:4px 6px;border-bottom:1px solid #ddd;text-align:right">'+(it.price*it.qty).toFixed(2)+'</td></tr>';
+  }).join('');
+  var dev=v.devuelta?'<div style="background:#fee2e2;color:#dc2626;font-weight:800;text-align:center;padding:5px;font-size:11px;margin-top:6px">★ VENTA DEVUELTA — VER NOTA DE CRÉDITO ★</div>':(v.devueltaParcial?'<div style="background:#fef3c7;color:#b45309;font-weight:700;text-align:center;padding:4px;font-size:10px;margin-top:6px">Devolución parcial registrada: -'+(v.montoDevuelto||0).toFixed(2)+'</div>':'');
+  var w=window.open('','_blank','width=420,height=640');
+  if(!w){ toast('Permite las ventanas emergentes para ver la factura','warn'); return; }
+  w.document.write('<html><head><title>FACTURA '+v.numFactura+'</title><style>body{font-family:Arial,sans-serif;font-size:12px;color:#000;padding:16px}table{width:100%;border-collapse:collapse}</style></head><body>'+
+  '<div style="border:2px solid #000;padding:12px">'+
+  '<div style="display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:8px">'+
+    '<div><div style="font-size:15px;font-weight:900">'+((c.name||'MI NEGOCIO').toUpperCase())+'</div>'+
+    '<div>'+(c.address||'')+'</div><div>Tel: '+(c.phone||'—')+'</div></div>'+
+    '<div style="text-align:right"><div style="font-size:11px;font-weight:800">RIF: '+(c.rfc||'—')+'</div>'+
+    '<div style="font-size:10px;margin-top:6px">SERIAL: '+(fc.serial||'—')+'</div></div></div>'+
+  '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:8px">'+
+    '<div><b>NRO. FACTURA:</b> '+v.numFactura+'<br><b>NRO. CONTROL:</b> '+v.numControl+'</div>'+
+    '<div style="text-align:right"><b>FECHA:</b> '+fiscFecha(v.date)+'<br><b>HORA:</b> '+new Date(v.date).toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit'})+'</div></div>'+
+  '<div style="border:1px solid #000;padding:6px;font-size:11px;margin-bottom:8px"><b>CLIENTE:</b> '+v.facClienteNombre+' &nbsp; <b>RIF/CÉD:</b> '+(v.facClienteRif||'—')+'</div>'+
+  '<table><thead><tr style="background:#eee"><th style="padding:4px 6px;text-align:left;border-bottom:1px solid #000">Descripción</th><th style="padding:4px 6px;text-align:center;border-bottom:1px solid #000">Cant</th><th style="padding:4px 6px;text-align:right;border-bottom:1px solid #000">P.Unit</th><th style="padding:4px 6px;text-align:right;border-bottom:1px solid #000">Total</th></tr></thead><tbody>'+items+'</tbody></table>'+
+  '<div style="margin-top:8px;font-size:12px">'+
+  '<div style="display:flex;justify-content:space-between"><span>BASE IMPONIBLE:</span><b>'+base.toFixed(2)+'</b></div>'+
+  '<div style="display:flex;justify-content:space-between"><span>IVA ('+cfg.iva+'%):</span><b>'+iva.toFixed(2)+'</b></div>'+
+  '<div style="display:flex;justify-content:space-between;font-size:15px;border-top:2px solid #000;margin-top:4px;padding-top:4px"><span><b>TOTAL USD:</b></span><b>'+total.toFixed(2)+'</b></div>'+
+  '<div style="display:flex;justify-content:space-between;color:#333"><span>TOTAL Bs (tasa '+tasa.toFixed(2)+'):</span><b>'+(total*tasa).toFixed(2)+'</b></div></div>'+
+  dev+
+  '<div style="margin-top:10px;font-size:9px;color:#555;text-align:center;border-top:1px dashed #999;padding-top:6px">DOCUMENTO NO FISCAL — formato referencial tipo SENIAT.<br>Generado por MERCADO LOGIC PRO v2.1 · A2K Digital Studio</div>'+
+  '</div>'+
+  '<script>window.onload=function(){window.print();}<\/script></body></html>');
+  w.document.close();
+}
+</script>
+
 </body>
 </html>
